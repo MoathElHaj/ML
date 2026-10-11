@@ -12,8 +12,8 @@ export const site = {
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "",
   address: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "",
   socials: {
-    instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "",
-    facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || "",
+    instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://www.instagram.com/bariq_tech/",
+    facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || "https://www.facebook.com/profile.php?id=61570755871941",
     x: process.env.NEXT_PUBLIC_X_URL || "",
     linkedin: process.env.NEXT_PUBLIC_LINKEDIN_URL || "",
     tiktok: process.env.NEXT_PUBLIC_TIKTOK_URL || "",
