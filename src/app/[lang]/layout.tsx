@@ -7,6 +7,7 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { WhatsAppLinkHandler } from "@/components/WhatsAppLinkHandler";
+import { MotionProvider } from "@/components/motion/MotionProvider";
 import "../globals.css";
 
 const plex = IBM_Plex_Sans_Arabic({
@@ -46,8 +47,8 @@ export const viewport: Viewport = {
   themeColor: "#612aae",
 };
 
-/** Applies a saved dark-mode choice before first paint. Light is the default for everyone else. */
-const themeScript = `try{if(localStorage.getItem("bariq-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`;
+/** Before first paint: marks JS as available (for scroll reveals) and applies a saved dark-mode choice. Light is the default. */
+const themeScript = `document.documentElement.classList.add("js");try{if(localStorage.getItem("bariq-theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`;
 
 export default async function SiteLayout(props: LayoutProps<"/[lang]">) {
   const { lang } = await props.params;
@@ -58,10 +59,12 @@ export default async function SiteLayout(props: LayoutProps<"/[lang]">) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-dvh">
-        <Header lang={lang} />
-        <main id="main">{props.children}</main>
-        <Footer lang={lang} />
-        <WhatsAppButton lang={lang} />
+        <MotionProvider>
+          <Header lang={lang} />
+          <main id="main">{props.children}</main>
+          <Footer lang={lang} />
+          <WhatsAppButton lang={lang} />
+        </MotionProvider>
         <WhatsAppLinkHandler />
       </body>
     </html>

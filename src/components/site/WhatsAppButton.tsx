@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { MessageCircleQuestion, X } from "lucide-react";
 import { whatsappLink } from "@/lib/site";
 import { getDict, href, type Lang } from "@/lib/i18n";
@@ -56,12 +57,18 @@ export function WhatsAppButton({ lang }: { lang: Lang }) {
 
   return (
     <div className="fixed bottom-5 start-5 z-50 flex flex-col items-start gap-3 sm:bottom-6 sm:start-6">
+      <AnimatePresence>
       {open && (
-        <div
+        <motion.div
           ref={panel}
           role="dialog"
           aria-modal="false"
           aria-labelledby="chat-title"
+          initial={{ opacity: 0, y: 24, scale: 0.92 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 16, scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 320, damping: 26 }}
+          style={{ transformOrigin: "bottom" }}
           className="flex max-h-[min(640px,calc(100dvh-120px))] w-[min(380px,calc(100vw-40px))] flex-col overflow-hidden rounded-[24px] border border-line bg-card shadow-[0_24px_60px_-12px_rgb(35_11_75/.45)]"
         >
           <div className="flex items-center gap-3 bg-night px-4 py-3.5 text-white">
@@ -90,7 +97,13 @@ export function WhatsAppButton({ lang }: { lang: Lang }) {
 
           <div ref={log} className="flex-1 space-y-3 overflow-y-auto bg-tint/60 px-4 py-4" aria-live="polite">
             {turns.map((turn, i) => (
-              <div key={i} className={cn("flex", turn.from === "user" ? "justify-end" : "justify-start")}>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.3, delay: turn.from === "bot" && i > 0 ? 0.35 : 0 }}
+                className={cn("flex", turn.from === "user" ? "justify-end" : "justify-start")}
+              >
                 <div
                   className={cn(
                     "max-w-[85%] whitespace-pre-line rounded-2xl px-3.5 py-2.5 text-[14px] leading-6",
@@ -105,7 +118,7 @@ export function WhatsAppButton({ lang }: { lang: Lang }) {
                     </Link>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))}
 
             {remaining.length > 0 && (
@@ -144,8 +157,9 @@ export function WhatsAppButton({ lang }: { lang: Lang }) {
             </a>
             <p className="mt-1.5 text-center text-[11px] text-muted">{t.continueHint}</p>
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
 
       <button
         ref={toggle}
@@ -156,7 +170,18 @@ export function WhatsAppButton({ lang }: { lang: Lang }) {
         className="group relative flex items-center gap-2 rounded-full bg-whatsapp-dark p-3.5 text-white shadow-[0_12px_28px_-8px_rgb(18_140_75/.6)] transition-transform hover:scale-105"
       >
         {!open && <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-whatsapp opacity-25 motion-reduce:hidden" />}
-        {open ? <X className="size-7" /> : <WhatsAppIcon className="size-7" />}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={open ? "x" : "wa"}
+            className="flex"
+            initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+            exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {open ? <X className="size-7" /> : <WhatsAppIcon className="size-7" />}
+          </motion.span>
+        </AnimatePresence>
       </button>
     </div>
   );

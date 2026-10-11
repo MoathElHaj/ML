@@ -6,6 +6,7 @@ import { getDict, langFrom } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
 import { PageHero } from "@/components/site/parts";
 import { BookingForm } from "@/components/forms/BookingForm";
+import { Reveal } from "@/components/motion/Reveal";
 
 const perkIcons = [Gift, Clock, CheckCircle2, ShieldCheck];
 
@@ -28,7 +29,7 @@ export default async function BookingPage(props: PageProps<"/[lang]/booking">) {
       <section className="container-x grid gap-10 py-14 sm:py-16 lg:grid-cols-[1fr_1.7fr]">
         <aside className="lg:sticky lg:top-28 lg:self-start">
           <h2 className="text-2xl font-bold text-ink">{b.perksTitle}</h2>
-          <ul className="mt-6 space-y-4">
+          <Reveal as="ul" variant="stagger" className="mt-6 space-y-4">
             {b.perks.map((perk, i) => {
               const Icon = perkIcons[i];
               const title = typeof perk.title === "function" ? perk.title(booking.durationMinutes) : perk.title;
@@ -44,7 +45,7 @@ export default async function BookingPage(props: PageProps<"/[lang]/booking">) {
                 </li>
               );
             })}
-          </ul>
+          </Reveal>
         </aside>
         <BookingForm lang={lang} services={services.map((s) => ({ slug: s.slug, title: s.title }))} defaultService={defaultService} />
       </section>

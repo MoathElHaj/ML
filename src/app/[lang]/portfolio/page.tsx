@@ -4,7 +4,8 @@ import { getProjects, getServices } from "@/lib/data";
 import { getDict, href, langFrom } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
 import { CtaBand, EmptyState, PageHero, ProjectCard } from "@/components/site/parts";
-import { cn } from "@/lib/utils";
+import { FilterTabs } from "@/components/site/FilterTabs";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const revalidate = 60;
 
@@ -27,29 +28,22 @@ export default async function PortfolioPage(props: PageProps<"/[lang]/portfolio"
       <PageHero eyebrow={t.portfolio.eyebrow} title={t.portfolio.title} intro={t.portfolio.intro} />
       <section className="container-x py-14 sm:py-16">
         {projects.length > 0 && (
-          <nav aria-label={t.portfolio.filterAria} className="-mx-1 mb-10 flex gap-2 overflow-x-auto px-1 pb-1">
-            {[{ slug: "", title: t.portfolio.all }, ...services].map((s) => (
-              <Link
-                key={s.slug}
-                href={href(lang, s.slug ? `/portfolio?service=${s.slug}` : "/portfolio")}
-                scroll={false}
-                aria-current={filter === s.slug ? "page" : undefined}
-                className={cn(
-                  "whitespace-nowrap rounded-full border-[1.5px] px-5 py-2.5 text-[15px] font-semibold transition-colors",
-                  filter === s.slug ? "border-violet bg-violet text-white" : "border-line bg-card text-ink hover:border-accent",
-                )}
-              >
-                {s.title}
-              </Link>
-            ))}
-          </nav>
+          <FilterTabs
+            label={t.portfolio.filterAria}
+            active={filter}
+            items={[{ slug: "", title: t.portfolio.all }, ...services].map((s) => ({
+              key: s.slug,
+              label: s.title,
+              href: href(lang, s.slug ? `/portfolio?service=${s.slug}` : "/portfolio"),
+            }))}
+          />
         )}
         {shown.length > 0 ? (
-          <div className="grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
+          <Reveal key={filter} variant="stagger" className="grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3">
             {shown.map((p) => (
               <ProjectCard key={p.id} project={p} lang={lang} />
             ))}
-          </div>
+          </Reveal>
         ) : (
           <EmptyState
             title={filter ? t.portfolio.emptyFiltered : t.portfolio.empty}

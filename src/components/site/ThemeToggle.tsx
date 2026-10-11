@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
 import { getDict, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -37,11 +38,22 @@ export function ThemeToggle({ lang, className }: { lang: Lang; className?: strin
       aria-label={dark ? t.lightMode : t.darkMode}
       title={dark ? t.lightMode : t.darkMode}
       className={cn(
-        "inline-flex size-11 items-center justify-center rounded-full border border-line bg-card text-ink transition-colors hover:border-accent hover:text-accent",
+        "inline-flex size-11 items-center justify-center overflow-hidden rounded-full border border-line bg-card text-ink transition-colors hover:border-accent hover:text-accent",
         className,
       )}
     >
-      {dark ? <Sun className="size-5" aria-hidden /> : <Moon className="size-5" aria-hidden />}
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span
+          key={dark ? "sun" : "moon"}
+          className="flex"
+          initial={{ rotate: -120, scale: 0.4, opacity: 0 }}
+          animate={{ rotate: 0, scale: 1, opacity: 1 }}
+          exit={{ rotate: 120, scale: 0.4, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 18 }}
+        >
+          {dark ? <Sun className="size-5" aria-hidden /> : <Moon className="size-5" aria-hidden />}
+        </motion.span>
+      </AnimatePresence>
     </button>
   );
 }

@@ -7,6 +7,7 @@ import { pageMeta } from "@/lib/seo";
 import { PageHero } from "@/components/site/parts";
 import { ContactForm } from "@/components/forms/ContactForm";
 import { WhatsAppIcon } from "@/components/icons";
+import { Reveal } from "@/components/motion/Reveal";
 
 export async function generateMetadata(props: PageProps<"/[lang]/contact">): Promise<Metadata> {
   const lang = await langFrom(props.params);
@@ -38,7 +39,7 @@ export default async function ContactPage(props: PageProps<"/[lang]/contact">) {
     <>
       <PageHero eyebrow={c.eyebrow} title={c.title} intro={c.intro} />
       <section className="container-x grid gap-10 py-14 sm:py-16 lg:grid-cols-[1fr_1.5fr]">
-        <div className="space-y-4">
+        <Reveal variant="stagger" className="space-y-4">
           {items.map(({ Icon, title, value, link, external, ltr, accent }) => {
             const body = (
               <>
@@ -87,7 +88,7 @@ export default async function ContactPage(props: PageProps<"/[lang]/contact">) {
               <p className="text-[15px] text-white/80">{c.talkSub}</p>
             </div>
           </Link>
-        </div>
+        </Reveal>
         <div className="card p-6 sm:p-8">
           <h2 className="mb-6 text-2xl font-bold text-ink">{c.formTitle}</h2>
           <ContactForm lang={lang} />

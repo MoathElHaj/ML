@@ -6,6 +6,7 @@ import { whatsappLink } from "@/lib/site";
 import { getDict, href, type Lang } from "@/lib/i18n";
 import type { Post, Project, Service } from "@/lib/types";
 import { cn, formatDate, readingMinutes } from "@/lib/utils";
+import { Reveal } from "@/components/motion/Reveal";
 
 export function SectionHeading({
   eyebrow,
@@ -37,11 +38,11 @@ export function PageHero({ eyebrow, title, intro }: { eyebrow: string; title: st
   return (
     <section className="hero-glow relative -mt-[72px] overflow-hidden pt-[72px]">
       <div className="grid-dots pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent_85%)]" />
-      <div className="container-x relative py-16 text-center sm:py-20">
+      <Reveal variant="stagger" className="container-x relative py-16 text-center sm:py-20">
         <span className="eyebrow">{eyebrow}</span>
         <h1 className="mx-auto mt-5 max-w-3xl text-4xl font-bold text-ink sm:text-5xl">{title}</h1>
         {intro && <p className="mx-auto mt-5 max-w-2xl text-lg leading-9 text-muted">{intro}</p>}
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -62,7 +63,7 @@ export function ServiceCard({ service, index, lang }: { service: Service; index?
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         )}
-        <span className="absolute start-4 top-4 flex size-12 items-center justify-center rounded-2xl bg-card/95 text-accent shadow-md">
+        <span className="icon-wiggle absolute start-4 top-4 flex size-12 items-center justify-center rounded-2xl bg-card/95 text-accent shadow-md">
           <ServiceIcon name={service.icon} className="size-6" aria-hidden />
         </span>
         {index !== undefined && (
@@ -155,8 +156,8 @@ export function CtaBand({ lang, title, body }: { lang: Lang; title?: string; bod
   const wa = whatsappLink(t.wa.consult);
   return (
     <section className="container-x py-16 sm:py-20">
-      <div className="relative overflow-hidden rounded-[32px] bg-night px-6 py-12 text-white ring-1 ring-white/5 sm:px-12 sm:py-16">
-        <Image src="/images/cta.jpg" alt="" fill sizes="100vw" className="object-cover opacity-45" />
+      <Reveal className="relative overflow-hidden rounded-[32px] bg-night px-6 py-12 text-white ring-1 ring-white/5 sm:px-12 sm:py-16">
+        <Image src="/images/cta.jpg" alt="" fill sizes="100vw" className="animate-[cta-zoom_18s_ease-in-out_infinite_alternate] object-cover opacity-45 motion-reduce:animate-none" />
         <div className="absolute inset-0 from-night via-night/85 to-night/30 rtl:bg-gradient-to-l ltr:bg-gradient-to-r" />
         <div className="relative max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-semibold text-lilac">
@@ -178,7 +179,7 @@ export function CtaBand({ lang, title, body }: { lang: Lang; title?: string; bod
             )}
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

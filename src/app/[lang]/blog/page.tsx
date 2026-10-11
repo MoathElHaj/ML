@@ -7,6 +7,7 @@ import { pageMeta } from "@/lib/seo";
 import { CtaBand, EmptyState, PageHero, PostCard } from "@/components/site/parts";
 import { ForwardArrow, nudge } from "@/components/icons";
 import { cn, formatDate, readingMinutes } from "@/lib/utils";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const revalidate = 60;
 
@@ -67,11 +68,11 @@ export default async function BlogPage(props: PageProps<"/[lang]/blog">) {
               </div>
             </Link>
             {rest.length > 0 && (
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <Reveal variant="stagger" className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {rest.map((p) => (
                   <PostCard key={p.id} post={p} lang={lang} />
                 ))}
-              </div>
+              </Reveal>
             )}
           </>
         )}

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { CalendarCheck, Languages, Menu, X } from "lucide-react";
 import { nav } from "@/lib/site";
 import { basePath, getDict, href, type Lang } from "@/lib/i18n";
@@ -78,17 +79,21 @@ export function Header({ lang }: { lang: Lang }) {
         </Link>
 
         <nav aria-label={t.mainNav} className="hidden xl:block">
-          <ul className="flex items-center gap-1">
+          <ul className="relative isolate flex items-center gap-1">
             {nav.map((item) => (
               <li key={item.href}>
                 <Link
                   href={href(lang, item.href)}
                   aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
-                    "rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors",
-                    isActive(item.href) ? "bg-tint text-accent" : "text-ink hover:text-accent",
+                    "relative block rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors",
+                    isActive(item.href) ? "text-accent" : "text-ink hover:text-accent",
                   )}
                 >
+                  {/* The active pill slides between tabs. */}
+                  {isActive(item.href) && (
+                    <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-tint" transition={{ type: "spring", stiffness: 380, damping: 32 }} />
+                  )}
                   {t[item.key]}
                 </Link>
               </li>
@@ -113,17 +118,36 @@ export function Header({ lang }: { lang: Lang }) {
             aria-label={open ? t.closeMenu : t.openMenu}
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={open ? "close" : "menu"}
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                exit={{ rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="flex"
+              >
+                {open ? <X className="size-5" /> : <Menu className="size-5" />}
+              </motion.span>
+            </AnimatePresence>
           </button>
         </div>
       </div>
 
+      <AnimatePresence>
       {open && (
-        <div id="mobile-menu" className="h-[calc(100dvh-72px)] overflow-y-auto border-t border-line bg-surface xl:hidden">
+        <motion.div
+          id="mobile-menu"
+          className="h-[calc(100dvh-72px)] overflow-y-auto border-t border-line bg-surface xl:hidden"
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+        >
           <nav aria-label={t.mobileNav} className="container-x py-6">
             <ul className="flex flex-col gap-1">
-              {nav.map((item) => (
-                <li key={item.href}>
+              {nav.map((item, i) => (
+                <motion.li key={item.href} initial={{ opacity: 0, x: lang === "ar" ? 16 : -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.04 * i }}>
                   <Link
                     href={href(lang, item.href)}
                     onClick={() => setOpen(false)}
@@ -135,7 +159,7 @@ export function Header({ lang }: { lang: Lang }) {
                   >
                     {t[item.key]}
                   </Link>
-                </li>
+                </motion.li>
               ))}
             </ul>
             <div className="mt-6 flex items-center gap-2 sm:hidden">
@@ -147,8 +171,9 @@ export function Header({ lang }: { lang: Lang }) {
               {t.book}
             </Link>
           </nav>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </header>
   );
 }

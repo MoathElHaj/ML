@@ -9,6 +9,7 @@ import { pageMeta } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { PageHero } from "@/components/site/parts";
 import { ForwardArrow, ServiceIcon, WhatsAppIcon } from "@/components/icons";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const revalidate = 60;
 
@@ -33,7 +34,7 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
         <h2 id="packages-title" className="sr-only">
           {p.packagesSr}
         </h2>
-        <div className="grid items-stretch gap-6 lg:grid-cols-3 lg:gap-5">
+        <Reveal variant="stagger" className="grid items-stretch gap-6 lg:grid-cols-3 lg:gap-5">
           {getMarketingPackages(lang).map((pkg) => {
             const wa = whatsappLink(t.wa.package(pkg.name, pkg.price));
             const link = wa ?? href(lang, "/booking?service=digital-marketing");
@@ -41,10 +42,10 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
               <article
                 key={pkg.id}
                 className={cn(
-                  "relative flex flex-col rounded-[28px] p-7 sm:p-8",
+                  "relative flex flex-col rounded-[28px] p-7 transition-[translate,box-shadow] duration-300 hover:-translate-y-1.5 sm:p-8",
                   pkg.featured
-                    ? "bg-night text-white shadow-[0_30px_60px_-24px_rgb(58_22_115/.6)] ring-2 ring-violet lg:-my-4 lg:py-12 dark:bg-deep"
-                    : "border border-line bg-card text-ink shadow-[var(--shadow-soft)]",
+                    ? "animate-glow bg-night text-white ring-2 ring-violet motion-reduce:animate-none lg:-my-4 lg:py-12 dark:bg-deep"
+                    : "border border-line bg-card text-ink shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-lift)]",
                 )}
               >
                 {pkg.featured && (
@@ -91,7 +92,7 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
               </article>
             );
           })}
-        </div>
+        </Reveal>
         <p className="mt-10 text-center text-[15px] text-muted">
           {p.unsure}{" "}
           <Link href={href(lang, "/booking?service=digital-marketing")} className="font-semibold text-accent underline-offset-4 hover:underline">
@@ -111,12 +112,12 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
             <p className="mt-4 text-[17px] leading-8 text-muted">{p.quoteIntro}</p>
           </div>
 
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <Reveal variant="stagger" className="mt-12 grid gap-6 md:grid-cols-3">
             {quoteServices.map((s) => {
               const wa = whatsappLink(t.wa.quote(s.title));
               return (
-                <article key={s.id} className="card flex flex-col p-7">
-                  <span className="flex size-14 items-center justify-center rounded-2xl bg-violet text-white">
+                <article key={s.id} className="card group flex flex-col p-7">
+                  <span className="icon-wiggle flex size-14 items-center justify-center rounded-2xl bg-violet text-white">
                     <ServiceIcon name={s.icon} className="size-7" aria-hidden />
                   </span>
                   <h3 className="mt-5 text-xl font-bold text-ink">{s.title}</h3>
@@ -141,7 +142,7 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
                 </article>
               );
             })}
-          </div>
+          </Reveal>
 
           <div className="mt-12 flex flex-col items-center justify-between gap-6 rounded-[28px] bg-night px-6 py-8 text-white ring-1 ring-white/5 sm:flex-row sm:px-10">
             <div>

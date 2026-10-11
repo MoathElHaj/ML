@@ -10,6 +10,7 @@ import { getDict, href, langFrom, locales } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
 import { CtaBand, ProjectCard, ServiceCard } from "@/components/site/parts";
 import { ForwardArrow, ServiceIcon, WhatsAppIcon } from "@/components/icons";
+import { Reveal } from "@/components/motion/Reveal";
 
 export const revalidate = 60;
 
@@ -82,7 +83,7 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
       {service.features.length > 0 && (
         <section className="container-x py-16 sm:py-20">
           <h2 className="text-[28px] font-bold text-ink sm:text-3xl">{t.services.includes}</h2>
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2">
+          <Reveal as="ul" variant="stagger" className="mt-8 grid gap-4 sm:grid-cols-2">
             {service.features.map((f) => (
               <li key={f} className="card flex items-center gap-4 p-5">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-tint text-accent">
@@ -91,14 +92,14 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
                 <span className="text-[17px] font-semibold text-ink">{f}</span>
               </li>
             ))}
-          </ul>
+          </Reveal>
         </section>
       )}
 
       <section className="bg-tint/70 py-16 sm:py-20">
         <div className="container-x">
           <h2 className="text-[28px] font-bold text-ink sm:text-3xl">{t.services.howWeWork}</h2>
-          <ol className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Reveal as="ol" variant="stagger" className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {getProcessSteps(lang).map((step, i) => (
               <li key={step.title} className="card p-6">
                 <span className="text-4xl font-bold text-lilac" dir="ltr">
@@ -108,7 +109,7 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
                 <p className="mt-1.5 text-[15px] leading-7 text-muted">{step.body}</p>
               </li>
             ))}
-          </ol>
+          </Reveal>
         </div>
       </section>
 
@@ -133,11 +134,11 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
               {t.common.allServices} <ForwardArrow className="size-4" />
             </Link>
           </div>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <Reveal variant="stagger" className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((s) => (
               <ServiceCard key={s.id} service={s} lang={lang} />
             ))}
-          </div>
+          </Reveal>
         </section>
       )}
     </>
