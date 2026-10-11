@@ -8,7 +8,7 @@ import type { Group } from "three";
 /** Shared pointer position (-1..1), read every frame without re-rendering React. */
 const pointer = { x: 0, y: 0 };
 
-function BrandRing({ side }: { side: 1 | -1 }) {
+function BrandRing({ side, compact }: { side: 1 | -1; compact: boolean }) {
   const group = useRef<Group>(null);
   const ring = useRef<Group>(null);
 
@@ -40,6 +40,8 @@ function BrandRing({ side }: { side: 1 | -1 }) {
         </group>
       </Float>
 
+      {!compact && (
+        <>
       <Float speed={2} rotationIntensity={1.2} floatIntensity={1.6}>
         <mesh position={[side * -1.9, 1.5, 0.6]} scale={0.32}>
           <icosahedronGeometry args={[1, 0]} />
@@ -58,6 +60,8 @@ function BrandRing({ side }: { side: 1 | -1 }) {
           <meshPhysicalMaterial color="#8b4fe0" metalness={0.3} roughness={0.2} clearcoat={1} flatShading />
         </mesh>
       </Float>
+        </>
+      )}
     </group>
   );
 }
@@ -92,7 +96,7 @@ export default function HeroScene({ dir }: { dir: "rtl" | "ltr" }) {
   const camera = useMemo(() => ({ position: [0, 0, 7.5] as [number, number, number], fov: 42 }), []);
 
   return (
-    <div ref={wrapper} className="pointer-events-none absolute inset-0" aria-hidden>
+    <div ref={wrapper} className="pointer-events-none absolute inset-0 opacity-60 lg:opacity-100" aria-hidden>
       <Canvas
         camera={camera}
         dpr={[1, 1.75]}
@@ -102,8 +106,9 @@ export default function HeroScene({ dir }: { dir: "rtl" | "ltr" }) {
         <ambientLight intensity={0.6} />
         <directionalLight position={[4, 6, 5]} intensity={1.6} color="#ffffff" />
         <pointLight position={[-4, -2, 3]} intensity={30} color="#cda9ff" />
-        <group position={small ? [side * -2.6, 1.6, -2.5] : [0, 0, 0]} scale={small ? 0.8 : 1}>
-          <BrandRing side={side} />
+        {/* On phones the text spans the width, so the ring shrinks into the top corner behind it. */}
+        <group position={small ? [-side * 3.1, 2.5, -1] : [0, 0, 0]} scale={small ? 0.5 : 1}>
+          <BrandRing side={side} compact={small} />
         </group>
         <Sparkles count={small ? 40 : 80} scale={[12, 7, 4]} size={3} speed={0.35} opacity={0.8} color="#b07bff" />
         {/* Procedural studio lighting for reflections: no network fetch. */}
