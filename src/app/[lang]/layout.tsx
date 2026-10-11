@@ -58,7 +58,8 @@ export default async function SiteLayout(props: LayoutProps<"/[lang]">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-dvh">
+      {/* Browser extensions (e.g. ColorZilla, Grammarly) add attributes to <body> before React hydrates. */}
+      <body className="min-h-dvh" suppressHydrationWarning>
         <MotionProvider>
           <Header lang={lang} />
           <main id="main">{props.children}</main>

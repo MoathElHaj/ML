@@ -25,7 +25,8 @@ export const viewport: Viewport = {
 export default function AdminRootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ar" dir="rtl" className={plex.variable}>
-      <body className="min-h-dvh">
+      {/* Browser extensions (e.g. ColorZilla, Grammarly) add attributes to <body> before React hydrates. */}
+      <body className="min-h-dvh" suppressHydrationWarning>
         {children}
         <WhatsAppLinkHandler />
       </body>
