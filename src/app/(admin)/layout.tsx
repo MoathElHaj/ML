@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { site } from "@/lib/site";
+import { WhatsAppLinkHandler } from "@/components/WhatsAppLinkHandler";
 import "../globals.css";
 
 const plex = IBM_Plex_Sans_Arabic({
@@ -24,7 +25,10 @@ export const viewport: Viewport = {
 export default function AdminRootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ar" dir="rtl" className={plex.variable}>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        <WhatsAppLinkHandler />
+      </body>
     </html>
   );
 }

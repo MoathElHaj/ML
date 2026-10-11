@@ -6,6 +6,7 @@ import { dirOf, getDict, isLang, locales } from "@/lib/i18n";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppButton } from "@/components/site/WhatsAppButton";
+import { WhatsAppLinkHandler } from "@/components/WhatsAppLinkHandler";
 import "../globals.css";
 
 const plex = IBM_Plex_Sans_Arabic({
@@ -61,6 +62,7 @@ export default async function SiteLayout(props: LayoutProps<"/[lang]">) {
         <main id="main">{props.children}</main>
         <Footer lang={lang} />
         <WhatsAppButton lang={lang} />
+        <WhatsAppLinkHandler />
       </body>
     </html>
   );
