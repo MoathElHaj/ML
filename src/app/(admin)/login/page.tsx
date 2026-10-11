@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { LoginForm } from "./LoginForm";
+import { RingsPattern } from "@/components/art/RingsPattern";
 
 export const metadata: Metadata = {
   title: "تسجيل الدخول",
@@ -26,8 +27,8 @@ export default async function LoginPage(props: PageProps<"/login">) {
         </div>
       </div>
       <div className="relative hidden bg-night lg:block">
-        <Image src="/images/service-web.jpg" alt="" fill sizes="50vw" className="object-cover opacity-80" />
-        <div className="absolute inset-0 bg-gradient-to-t from-night via-night/30 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_40%,#3a1673,#230b4b)]" />
+        <RingsPattern className="absolute left-1/2 top-[40%] size-[560px] -translate-x-1/2 -translate-y-1/2" />
         <div className="absolute bottom-12 start-12 end-12 text-white">
           <p className="text-3xl font-bold">نلمّع حضورك، وننمّي أعمالك.</p>
           <p className="mt-2 text-white/75" dir="ltr">

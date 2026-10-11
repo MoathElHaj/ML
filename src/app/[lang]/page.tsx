@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { CalendarCheck, Check, Mail, Sparkles } from "lucide-react";
 import { getPosts, getProjects, getServices } from "@/lib/data";
@@ -11,6 +10,7 @@ import { CtaBand, PostCard, ProjectCard, SectionHeading, ServiceCard } from "@/c
 import { ContactForm } from "@/components/forms/ContactForm";
 import { ForwardArrow, WhatsAppIcon } from "@/components/icons";
 import { Hero } from "@/components/site/hero/Hero";
+import { AboutArt } from "@/components/art/AboutArt";
 import { Reveal } from "@/components/motion/Reveal";
 
 export const revalidate = 60;
@@ -78,8 +78,8 @@ export default async function HomePage(props: PageProps<"/[lang]">) {
       <section className="bg-tint/70 py-20 sm:py-24" aria-labelledby="about-title">
         <div className="container-x grid items-center gap-12 lg:grid-cols-2">
           <Reveal className="relative">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[32px] bg-night">
-              <Image src="/images/about.jpg" alt="" fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[32px] bg-night shadow-[var(--shadow-lift)]">
+              <AboutArt />
             </div>
             <div className="absolute -bottom-6 end-6 rounded-2xl bg-violet px-6 py-4 text-white shadow-[var(--shadow-lift)]">
               <p className="text-sm text-white/80">{h.sloganLabel}</p>

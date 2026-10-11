@@ -1,13 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform, type Variants } from "motion/react";
 import { CalendarCheck, Check, Code2, Megaphone, MessageCircle, Palette, Smartphone, Sparkles, TrendingUp, type LucideIcon } from "lucide-react";
 import { dirOf, getDict, href, type Lang } from "@/lib/i18n";
 import { ForwardArrow } from "@/components/icons";
+import { HeroArt } from "@/components/art/HeroArt";
 
 // Three.js only loads in the browser, after the hero text has painted.
 const HeroScene = dynamic(() => import("./HeroScene"), { ssr: false, loading: () => null });
@@ -154,18 +154,8 @@ export function Hero({ lang, servicesCount }: { lang: Lang; servicesCount: numbe
         >
           <div className="absolute -inset-4 -z-10 rounded-[40px] bg-gradient-to-br from-lilac/60 to-violet/10 blur-2xl dark:from-violet/40" />
           <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="relative">
-            <div className="relative aspect-[16/11] overflow-hidden rounded-[32px] border-[6px] border-card bg-night shadow-[var(--shadow-lift)]">
-              <Image src="/images/hero.jpg" alt={h.heroAlt} fill priority sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
-              {/* A slow light sweep across the image. */}
-              {!reduce && (
-                <motion.span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/15 to-transparent"
-                  initial={{ left: "-40%" }}
-                  animate={{ left: "120%" }}
-                  transition={{ duration: 2.8, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
-                />
-              )}
+            <div role="img" aria-label={h.heroAlt} className="relative aspect-[600/412] overflow-hidden rounded-[32px] border-[6px] border-card bg-tint shadow-[var(--shadow-lift)]">
+              <HeroArt />
             </div>
 
             {orbitIcons.map((chip) => (

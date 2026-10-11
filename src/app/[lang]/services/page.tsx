@@ -8,6 +8,7 @@ import { pageMeta } from "@/lib/seo";
 import { CtaBand, PageHero } from "@/components/site/parts";
 import { ForwardArrow, ServiceIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion/Reveal";
+import { ServiceArt, hasArt } from "@/components/art/ServiceArt";
 
 export const revalidate = 60;
 
@@ -28,8 +29,12 @@ export default async function ServicesPage(props: PageProps<"/[lang]/services">)
         {services.map((s, i) => (
           <Reveal as="article" key={s.id} id={s.slug} className="group grid scroll-mt-28 items-center gap-10 lg:grid-cols-2">
             <div className={i % 2 === 1 ? "lg:order-2" : undefined}>
-              <div className="relative aspect-[16/11] overflow-hidden rounded-[32px] bg-night shadow-[var(--shadow-soft)]">
-                {s.image_url && <Image src={s.image_url} alt="" fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />}
+              <div className="relative aspect-[16/11] overflow-hidden rounded-[32px] border border-line bg-tint shadow-[var(--shadow-soft)]">
+                {hasArt(s.slug) ? (
+                  <ServiceArt slug={s.slug} className="transition-transform duration-700 group-hover:scale-[1.03]" />
+                ) : (
+                  s.image_url && <Image src={s.image_url} alt="" fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                )}
               </div>
             </div>
             <div>

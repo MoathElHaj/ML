@@ -301,3 +301,29 @@
   from { transform: scale(1); }
   to { transform: scale(1.12); }
 }
+
+/* ---------------------------------------------------------------------------
+   Service illustrations (components/art). Subtle, looping, GPU-friendly.
+--------------------------------------------------------------------------- */
+.art-root svg * { transform-box: fill-box; }
+@keyframes art-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes art-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes art-bar { from { transform: scaleY(0.15); } to { transform: scaleY(1); } }
+@keyframes art-draw { from { stroke-dashoffset: 400; } to { stroke-dashoffset: 0; } }
+@keyframes art-cursor {
+  0%, 100% { transform: translate(0, 0); }
+  35% { transform: translate(-150px, 20px); }
+  55% { transform: translate(-150px, 20px) scale(0.85); }
+  65% { transform: translate(-150px, 20px); }
+}
+@keyframes art-spin { to { transform: rotate(360deg); } }
+@keyframes art-pulse { 0% { transform: scale(0.6); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+
+.art-rise { animation: art-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.art-float { animation: art-float 6s ease-in-out infinite; }
+.art-bar { transform-origin: bottom; animation: art-bar 1.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.art-draw { stroke-dasharray: 400; animation: art-draw 2.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.art-draw[stroke-dasharray="6 6"] { stroke-dasharray: 6 6; animation: none; }
+.art-cursor { animation: art-cursor 6s ease-in-out infinite; }
+.art-spin-slow { transform-origin: center; animation: art-spin 22s linear infinite; }
+.art-pulse { transform-origin: center; animation: art-pulse 2.6s ease-out infinite; }

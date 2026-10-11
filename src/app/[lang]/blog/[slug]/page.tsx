@@ -76,11 +76,13 @@ export default async function PostPage(props: PageProps<"/[lang]/blog/[slug]">) 
             </div>
           </div>
         </header>
-        <div className="container-x max-w-5xl">
-          <div className="relative aspect-[16/8] overflow-hidden rounded-[32px] bg-tint">
-            <Image src={post.cover_url || "/images/blog-default.jpg"} alt="" fill priority sizes="(min-width: 1024px) 1000px, 100vw" className="object-cover" />
+        {post.cover_url && (
+          <div className="container-x max-w-5xl">
+            <div className="relative aspect-[16/8] overflow-hidden rounded-[32px] bg-tint">
+              <Image src={post.cover_url} alt="" fill priority sizes="(min-width: 1024px) 1000px, 100vw" className="object-cover" />
+            </div>
           </div>
-        </div>
+        )}
         <div className="container-x max-w-3xl py-12">
           {post.excerpt && <p className="mb-8 text-xl font-medium leading-10 text-ink">{post.excerpt}</p>}
           <Prose text={post.content} />

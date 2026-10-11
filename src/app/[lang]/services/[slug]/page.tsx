@@ -11,6 +11,7 @@ import { pageMeta } from "@/lib/seo";
 import { CtaBand, ProjectCard, ServiceCard } from "@/components/site/parts";
 import { ForwardArrow, ServiceIcon, WhatsAppIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion/Reveal";
+import { ServiceArt, hasArt } from "@/components/art/ServiceArt";
 
 export const revalidate = 60;
 
@@ -74,8 +75,12 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
               )}
             </div>
           </div>
-          <div className="relative aspect-[16/11] overflow-hidden rounded-[32px] border-[6px] border-card bg-night shadow-[var(--shadow-lift)]">
-            {service.image_url && <Image src={service.image_url} alt="" fill priority sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />}
+          <div className="relative aspect-[16/11] overflow-hidden rounded-[32px] border-[6px] border-card bg-tint shadow-[var(--shadow-lift)]">
+            {hasArt(service.slug) ? (
+              <ServiceArt slug={service.slug} />
+            ) : (
+              service.image_url && <Image src={service.image_url} alt="" fill priority sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
+            )}
           </div>
         </div>
       </section>

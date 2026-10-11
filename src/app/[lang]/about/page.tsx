@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Eye, Gem, Target } from "lucide-react";
 import { getServices } from "@/lib/data";
 import { getProcessSteps, getValues } from "@/lib/content";
@@ -7,6 +6,7 @@ import { getDict, langFrom } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
 import { CtaBand, PageHero, ServiceCard } from "@/components/site/parts";
 import { Reveal } from "@/components/motion/Reveal";
+import { AboutArt } from "@/components/art/AboutArt";
 
 export const revalidate = 60;
 
@@ -27,8 +27,8 @@ export default async function AboutPage(props: PageProps<"/[lang]/about">) {
       <PageHero eyebrow={t.eyebrow} title={t.title} intro={t.intro} />
 
       <Reveal as="section" variant="stagger" className="container-x grid items-center gap-12 py-16 sm:py-20 lg:grid-cols-2">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[32px] bg-night">
-          <Image src="/images/about.jpg" alt="" fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[32px] bg-night shadow-[var(--shadow-lift)]">
+          <AboutArt />
         </div>
         <div>
           <h2 className="text-[28px] font-bold text-ink sm:text-4xl">

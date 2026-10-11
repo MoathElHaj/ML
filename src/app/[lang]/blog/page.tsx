@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getPosts } from "@/lib/data";
 import { getDict, href, langFrom } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
-import { CtaBand, EmptyState, PageHero, PostCard } from "@/components/site/parts";
+import { BrandCover, CtaBand, EmptyState, PageHero, PostCard } from "@/components/site/parts";
 import { ForwardArrow, nudge } from "@/components/icons";
 import { cn, formatDate, readingMinutes } from "@/lib/utils";
 import { Reveal } from "@/components/motion/Reveal";
@@ -43,14 +43,18 @@ export default async function BlogPage(props: PageProps<"/[lang]/blog">) {
           <>
             <Link href={href(lang, `/blog/${featured.slug}`)} className="card group grid overflow-hidden lg:grid-cols-2">
               <div className="relative aspect-[16/10] bg-tint lg:aspect-auto lg:min-h-[340px]">
-                <Image
-                  src={featured.cover_url || "/images/blog-default.jpg"}
-                  alt=""
-                  fill
-                  priority
-                  sizes="(min-width: 1024px) 580px, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+                {featured.cover_url ? (
+                  <Image
+                    src={featured.cover_url}
+                    alt=""
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 580px, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <BrandCover />
+                )}
               </div>
               <div className="flex flex-col justify-center p-7 sm:p-10">
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
