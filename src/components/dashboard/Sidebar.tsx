@@ -12,6 +12,7 @@ import {
   Layers,
   LogOut,
   Mail,
+  Megaphone,
   Menu,
   Newspaper,
   X,
@@ -28,6 +29,7 @@ const items = [
   { href: "/dashboard/services", label: "الخدمات", Icon: Layers },
   { href: "/dashboard/projects", label: "الأعمال", Icon: BriefcaseBusiness },
   { href: "/dashboard/posts", label: "المدونة", Icon: Newspaper },
+  { href: "/dashboard/marketing", label: "الحملات الإعلانية", Icon: Megaphone },
 ];
 
 export function Sidebar({ email, counts }: { email: string; counts: Counts }) {

@@ -81,6 +81,44 @@ const ar = {
     details: "التفاصيل",
     homepage: "الصفحة الرئيسية",
   },
+  chat: {
+    open: "افتح محادثة بريق",
+    close: "إغلاق المحادثة",
+    title: "فريق بريق",
+    status: "نرد عادة خلال ساعات العمل",
+    welcome: "أهلاً وسهلاً بك في بريق!\nكيف يمكننا مساعدتك اليوم؟ اختر سؤالاً من الأسئلة الشائعة، أو تحدث معنا مباشرة على واتساب.",
+    faqTitle: "أسئلة شائعة",
+    more: "سؤال آخر",
+    continue: "أكمل المحادثة على واتساب",
+    continueHint: "سيفتح واتساب برسالة جاهزة لفريقنا",
+    waMessage: (q?: string) => (q ? `مرحباً بريق، لدي استفسار بخصوص: ${q}` : "مرحباً بريق، أود الاستفسار عن خدماتكم"),
+    faqs: [
+      {
+        q: "ما هي الخدمات التي تقدمونها؟",
+        a: "نقدم أربع خدمات متكاملة: التسويق الرقمي، تصميم الجرافيك والهويات البصرية، تطوير المواقع والمتاجر الإلكترونية، وتطوير تطبيقات الموبايل iOS وAndroid.",
+        link: { href: "/services", label: "تصفّح خدماتنا" },
+      },
+      {
+        q: "كم أسعار باقات التسويق؟",
+        a: "لدينا ثلاث باقات شهرية: باقة البداية 250 ر.ع، الباقة الاحترافية 350 ر.ع (الأكثر طلباً)، والباقة المتقدمة 450 ر.ع. تشمل الاستراتيجية وخطة التسويق والمنشورات وفيديوهات الريلز.",
+        link: { href: "/pricing", label: "قارن الباقات" },
+      },
+      {
+        q: "كم تكلفة تصميم موقع أو تطبيق؟",
+        a: "تختلف التكلفة حسب حجم المشروع ومتطلباته، لذلك نرسل لك عرض سعر مفصّلاً ومجانياً بعد فهم احتياجك.",
+        link: { href: "/contact", label: "اطلب عرض سعر" },
+      },
+      {
+        q: "كيف أحجز استشارة مجانية؟",
+        a: "اختر اليوم والوقت المناسبين من صفحة الحجز. الجلسة مجانية مدتها 30 دقيقة، ونتواصل معك لتأكيد الموعد.",
+        link: { href: "/booking", label: "احجز الآن" },
+      },
+      {
+        q: "ما هي أوقات العمل؟",
+        a: "نعمل من الأحد إلى الخميس، من 10 صباحاً حتى 7 مساءً. يمكنك مراسلتنا في أي وقت وسنرد عليك في أقرب وقت.",
+      },
+    ],
+  },
   wa: {
     general: "مرحباً بريق، أود الاستفسار عن خدماتكم",
     contact: "مرحباً بريق، أود التواصل معكم",
@@ -399,6 +437,44 @@ const en: Dict = {
     bookConsult: "Book a consultation",
     details: "Details",
     homepage: "Home page",
+  },
+  chat: {
+    open: "Open Bariq chat",
+    close: "Close chat",
+    title: "Bariq team",
+    status: "We usually reply during working hours",
+    welcome: "Welcome to Bariq!\nHow can we help you today? Pick a common question below, or chat with us directly on WhatsApp.",
+    faqTitle: "Common questions",
+    more: "Ask something else",
+    continue: "Continue on WhatsApp",
+    continueHint: "Opens WhatsApp with a message ready for our team",
+    waMessage: (q?: string) => (q ? `Hello Bariq, I have a question about: ${q}` : "Hello Bariq, I'd like to ask about your services"),
+    faqs: [
+      {
+        q: "What services do you offer?",
+        a: "We offer four integrated services: digital marketing, graphic design and brand identity, website and online store development, and iOS and Android mobile apps.",
+        link: { href: "/services", label: "Browse our services" },
+      },
+      {
+        q: "How much are the marketing packages?",
+        a: "We have three monthly packages: Starter at OMR 250, Professional at OMR 350 (most popular), and Advanced at OMR 450. They include strategy, a marketing plan, posts and Reels videos.",
+        link: { href: "/pricing", label: "Compare packages" },
+      },
+      {
+        q: "How much does a website or app cost?",
+        a: "It depends on the size and requirements of the project, so we send you a detailed, free quote once we understand what you need.",
+        link: { href: "/contact", label: "Request a quote" },
+      },
+      {
+        q: "How do I book a free consultation?",
+        a: "Pick a day and time on the booking page. The session is free, lasts 30 minutes, and we'll contact you to confirm.",
+        link: { href: "/booking", label: "Book now" },
+      },
+      {
+        q: "What are your working hours?",
+        a: "Sunday to Thursday, 10 AM to 7 PM. You can message us anytime and we'll reply as soon as we can.",
+      },
+    ],
   },
   wa: {
     general: "Hello Bariq, I'd like to ask about your services",

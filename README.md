@@ -10,7 +10,7 @@
 ## 1. إعداد Supabase
 
 1. أنشئ مشروعاً في [supabase.com](https://supabase.com).
-2. من **SQL Editor** شغّل ملفات `supabase/migrations/` بالترتيب: `0001_init.sql` (الجداول، صلاحيات RLS، مخزن الصور `media`) ثم `0002_english_content.sql` (حقول المحتوى الإنجليزي).
+2. من **SQL Editor** شغّل ملفات `supabase/migrations/` بالترتيب: `0001_init.sql` (الجداول، صلاحيات RLS، مخزن الصور `media`)، ثم `0002_english_content.sql` (حقول المحتوى الإنجليزي)، ثم `0003_meta_ads.sql` (ربط Meta والحملات).
 3. شغّل `supabase/seed.sql` لإضافة الخدمات الأربع بالعربية والإنجليزية.
 4. أنشئ حساب المدير: **Authentication → Users → Add user** (بريد وكلمة مرور)، ثم امنحه صلاحية لوحة التحكم:
 
@@ -35,7 +35,21 @@
 | `NEXT_PUBLIC_CONTACT_EMAIL` / `PHONE` / `ADDRESS` | بيانات التواصل (اختيارية) |
 | `NEXT_PUBLIC_INSTAGRAM_URL` / `X_URL` / `LINKEDIN_URL` / `TIKTOK_URL` | حسابات التواصل (اختيارية) |
 
-## 3. التشغيل محلياً
+## 3. ربط Meta والحملات الإعلانية بالذكاء الاصطناعي (اختياري)
+
+من **لوحة التحكم ← الحملات الإعلانية** تربط حساب Meta، ثم يكتب الذكاء الاصطناعي (Claude) حملة «انقر للمراسلة على واتساب»: النصوص، الاستهداف، رسالة الترحيب والأسئلة السريعة. تراجعها وتعدّلها، ثم تُنشأ في حسابك الإعلاني **متوقفة (PAUSED)** — لا يُصرف أي مبلغ حتى تفعّلها بنفسك من مدير الإعلانات.
+
+المتطلبات في Meta:
+1. **Business Portfolio** فيه حساب إعلاني نشط وطريقة دفع.
+2. **صفحة فيسبوك** مرتبط بها رقم **واتساب بيزنس** (Meta Business Suite ← الإعدادات ← الحسابات المرتبطة ← WhatsApp).
+3. **تطبيق Meta**: من [developers.facebook.com](https://developers.facebook.com/apps) أنشئ تطبيقاً من نوع *Business*، أضف منتج **Facebook Login for Business** و **Marketing API**، وضع في *Valid OAuth Redirect URIs*:
+   `https://موقعك/api/meta/callback` (ومحلياً `http://localhost:3000/api/meta/callback`).
+4. أضف إلى متغيرات البيئة: `META_APP_ID` و `META_APP_SECRET` و `ANTHROPIC_API_KEY` (من [console.anthropic.com](https://console.anthropic.com)).
+5. شغّل `supabase/migrations/0003_meta_ads.sql`.
+
+> ما دام تطبيق Meta في وضع التطوير (Development) يعمل الربط لحسابات مسؤولي التطبيق فقط، وهذا يكفي لاستخدام بريق الداخلي.
+
+## 4. التشغيل محلياً
 
 ```bash
 pnpm install
@@ -46,7 +60,7 @@ pnpm dev
 
 **Supabase محلي (اختياري، يحتاج Docker):** `npx supabase start` يشغّل قاعدة بيانات محلية على المنافذ `553xx` ويطبّق الملفات تلقائياً.
 
-## 4. النشر
+## 5. النشر
 
 انشر على Vercel (أو أي استضافة تدعم Next.js)، وأضف متغيرات البيئة نفسها في إعدادات المشروع.
 
