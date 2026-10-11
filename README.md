@@ -20,8 +20,8 @@
 4. أنشئ حساب المدير: **Authentication → Users → Add user** (بريد وكلمة مرور)، ثم امنحه صلاحية لوحة التحكم:
 
    ```sql
-   insert into public.admins (user_id)
-   select id from auth.users where email = 'you@example.com';
+   insert into public.admins (user_id, email, role)
+   select id, email, 'owner' from auth.users where email = 'you@example.com';
    ```
 
 > الزوار يستطيعون فقط إرسال الحجوزات والرسائل وقراءة المحتوى المنشور. كل التعديلات والقراءة الخاصة محصورة بالمستخدمين الموجودين في جدول `admins`.
