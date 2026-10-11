@@ -30,7 +30,7 @@
 | `NEXT_PUBLIC_SUPABASE_URL` | رابط المشروع (Project Settings → API) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | المفتاح العام anon / publishable |
 | `NEXT_PUBLIC_SITE_URL` | رابط الموقع النهائي (للـ SEO وخريطة الموقع) |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | رقم واتساب بالصيغة الدولية، أرقام فقط (مثل `9689XXXXXXX`). بدونه يختفي زر واتساب |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | رقم واتساب بالصيغة الدولية، أرقام فقط. الافتراضي رقم بريق `96894178876` |
 | `NEXT_PUBLIC_BUSINESS_TIMEZONE` | المنطقة الزمنية لمواعيد الاستشارات (الافتراضي `Asia/Muscat`) |
 | `NEXT_PUBLIC_CONTACT_EMAIL` / `PHONE` / `ADDRESS` | بيانات التواصل (اختيارية) |
 | `NEXT_PUBLIC_INSTAGRAM_URL` / `X_URL` / `LINKEDIN_URL` / `TIKTOK_URL` | حسابات التواصل (اختيارية) |

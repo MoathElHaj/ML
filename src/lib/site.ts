@@ -7,7 +7,7 @@ export const site = {
   description:
     "وكالة بريق الرقمية: تسويق رقمي، تصميم جرافيك، تطوير مواقع وتطبيقات موبايل. نحوّل أفكارك إلى تجارب رقمية تنمّي أعمالك.",
   url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "").replace(/\D/g, ""),
+  whatsapp: (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "96894178876").replace(/\D/g, ""),
   email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "",
   phone: process.env.NEXT_PUBLIC_CONTACT_PHONE || "",
   address: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "",
