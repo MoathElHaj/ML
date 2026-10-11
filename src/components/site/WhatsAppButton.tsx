@@ -13,8 +13,11 @@ import { ForwardArrow, WhatsAppIcon } from "@/components/icons";
 type Turn = { from: "bot" | "user"; text: string; link?: { href: string; label: string } };
 
 /** Floating WhatsApp button that opens a small chat: welcome, quick answers, then hand-off to WhatsApp Business. */
-export function WhatsAppButton({ lang }: { lang: Lang }) {
+type Faq = { q: string; a: string; link?: { href: string; label: string } };
+
+export function WhatsAppButton({ lang, faqs: faqList }: { lang: Lang; faqs?: Faq[] }) {
   const t = getDict(lang).chat;
+  const faqs: Faq[] = faqList ?? t.faqs;
   const [open, setOpen] = useState(false);
   const [turns, setTurns] = useState<Turn[]>([{ from: "bot", text: t.welcome }]);
   const [lastQuestion, setLastQuestion] = useState<string>();
@@ -43,17 +46,17 @@ export function WhatsAppButton({ lang }: { lang: Lang }) {
 
   if (!wa) return null;
 
-  const ask = (faq: (typeof t.faqs)[number]) => {
+  const ask = (faq: Faq) => {
     setLastQuestion(faq.q);
     setTurns((prev) => [
       ...prev,
       { from: "user", text: faq.q },
-      { from: "bot", text: faq.a, link: "link" in faq && faq.link ? { href: href(lang, faq.link.href), label: faq.link.label } : undefined },
+      { from: "bot", text: faq.a, link: faq.link ? { href: href(lang, faq.link.href), label: faq.link.label } : undefined },
     ]);
   };
 
   const asked = new Set(turns.filter((x) => x.from === "user").map((x) => x.text));
-  const remaining = t.faqs.filter((f) => !asked.has(f.q));
+  const remaining = faqs.filter((f) => !asked.has(f.q));
 
   return (
     <div className="fixed bottom-5 start-5 z-50 flex flex-col items-start gap-3 sm:bottom-6 sm:start-6">

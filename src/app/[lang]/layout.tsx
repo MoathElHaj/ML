@@ -8,6 +8,11 @@ import { Footer } from "@/components/site/Footer";
 import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { WhatsAppLinkHandler } from "@/components/WhatsAppLinkHandler";
 import { MotionProvider } from "@/components/motion/MotionProvider";
+import { GtmNoscript, TrackingScripts } from "@/components/Tracking";
+import { getTrackingSettings } from "@/lib/settings";
+import { getPackages } from "@/lib/data";
+import { JsonLd } from "@/components/JsonLd";
+import { organizationSchema, siteFaqs, websiteSchema } from "@/lib/schema";
 import "../globals.css";
 
 const plex = IBM_Plex_Sans_Arabic({
@@ -53,20 +58,24 @@ const themeScript = `document.documentElement.classList.add("js");try{if(localSt
 export default async function SiteLayout(props: LayoutProps<"/[lang]">) {
   const { lang } = await props.params;
   if (!isLang(lang)) notFound();
+  const [tracking, packages] = await Promise.all([getTrackingSettings(), getPackages(lang)]);
   return (
     <html lang={lang} dir={dirOf(lang)} className={plex.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <JsonLd data={[organizationSchema(lang), websiteSchema(lang)]} />
       </head>
       {/* Browser extensions (e.g. ColorZilla, Grammarly) add attributes to <body> before React hydrates. */}
       <body className="min-h-dvh" suppressHydrationWarning>
+        <GtmNoscript id={tracking.gtm_id} />
         <MotionProvider>
           <Header lang={lang} />
           <main id="main">{props.children}</main>
           <Footer lang={lang} />
-          <WhatsAppButton lang={lang} />
+          <WhatsAppButton lang={lang} faqs={siteFaqs(lang, packages)} />
         </MotionProvider>
         <WhatsAppLinkHandler />
+        <TrackingScripts t={tracking} />
       </body>
     </html>
   );

@@ -11,6 +11,12 @@ export type Service = {
   image_url: string | null;
   features: string[];
   features_en?: string[] | null;
+  content?: string;
+  content_en?: string | null;
+  meta_title?: string | null;
+  meta_title_en?: string | null;
+  meta_description?: string | null;
+  meta_description_en?: string | null;
   sort_order: number;
   is_published: boolean;
   created_at?: string;
@@ -52,6 +58,10 @@ export type Post = {
   cover_url: string | null;
   category: string | null;
   category_en?: string | null;
+  meta_title?: string | null;
+  meta_title_en?: string | null;
+  meta_description?: string | null;
+  meta_description_en?: string | null;
   author_name: string;
   is_published: boolean;
   published_at: string | null;
@@ -74,6 +84,9 @@ export type Consultation = {
   message: string | null;
   status: ConsultationStatus;
   admin_notes: string | null;
+  lang: "ar" | "en";
+  confirmation_sent_at?: string | null;
+  reminder_sent_at?: string | null;
   created_at: string;
 };
 
@@ -85,6 +98,7 @@ export type Message = {
   subject: string | null;
   body: string;
   is_read: boolean;
+  lang?: "ar" | "en";
   created_at: string;
 };
 
@@ -93,4 +107,22 @@ export type FormState = {
   message?: string;
   errors?: Record<string, string>;
   values?: Record<string, string>;
+};
+
+export type Package = {
+  id: string;
+  name: string;
+  name_en: string | null;
+  price: number;
+  currency: string;
+  period: "month" | "year" | "once";
+  tagline: string;
+  tagline_en: string | null;
+  features: string[];
+  features_en: string[];
+  cta: string | null;
+  cta_en: string | null;
+  is_featured: boolean;
+  is_published: boolean;
+  sort_order: number;
 };

@@ -1,9 +1,15 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+import { after } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public";
+import { createServiceClient } from "@/lib/supabase/service";
 import { consultationSchema, fieldErrors, formObject, messageSchema } from "@/lib/validation";
+import { getBlockedDays, getBookingSettings } from "@/lib/settings";
+import { notifyNewBooking, notifyNewMessage } from "@/lib/email";
 import { getDict, isLang, type Lang } from "@/lib/i18n";
-import type { FormState } from "@/lib/types";
+import { defaultServices } from "@/lib/content";
+import type { Consultation, FormState, Message } from "@/lib/types";
 
 /** Bots fill every field; people never see this one. */
 function isBot(formData: FormData) {
@@ -26,16 +32,27 @@ export async function getBookedSlots(day: string): Promise<string[]> {
 
 export async function bookConsultation(_prev: FormState, formData: FormData): Promise<FormState> {
   if (isBot(formData)) return { ok: true };
-  const f = getDict(langOf(formData)).form;
+  const lang = langOf(formData);
+  const f = getDict(lang).form;
   const values = formObject(formData);
-  const parsed = consultationSchema(langOf(formData)).safeParse(values);
+  const [booking, blocked] = await Promise.all([getBookingSettings(), getBlockedDays()]);
+  const parsed = consultationSchema(lang, booking, blocked).safeParse(values);
   if (!parsed.success) {
     return { ok: false, message: f.msg.review, errors: fieldErrors(parsed.error), values };
   }
-  const supabase = createPublicClient();
-  if (!supabase) return { ok: false, message: f.msg.bookingOffline, values };
 
-  const { error } = await supabase.from("consultations").insert(parsed.data);
+  // With the service key the server may auto-confirm; otherwise visitors can only create pending bookings.
+  const service = createServiceClient();
+  const db = service ?? createPublicClient();
+  if (!db) return { ok: false, message: f.msg.bookingOffline, values };
+
+  const row = {
+    id: randomUUID(),
+    ...parsed.data,
+    lang,
+    status: service && booking.auto_confirm ? ("confirmed" as const) : ("pending" as const),
+  };
+  const { error } = await db.from("consultations").insert(row);
   if (error) {
     if (error.code === "23505") {
       return { ok: false, message: f.msg.slotTaken, errors: { scheduled_time: f.errors.slotTaken }, values };
@@ -43,14 +60,20 @@ export async function bookConsultation(_prev: FormState, formData: FormData): Pr
     console.error("bookConsultation", error.message);
     return { ok: false, message: f.msg.bookingFailed, values };
   }
-  return { ok: true, message: f.msg.bookingOk };
+
+  const consultation: Consultation = { ...row, admin_notes: null, created_at: new Date().toISOString() };
+  const serviceTitle = defaultServices.find((s) => s.slug === row.service_slug)?.title ?? row.service_slug;
+  after(() => notifyNewBooking(consultation, serviceTitle, booking.duration_minutes, booking.time_zone));
+
+  return { ok: true, message: row.status === "confirmed" ? f.msg.bookingConfirmed : f.msg.bookingOk };
 }
 
 export async function sendMessage(_prev: FormState, formData: FormData): Promise<FormState> {
   if (isBot(formData)) return { ok: true };
-  const f = getDict(langOf(formData)).form;
+  const lang = langOf(formData);
+  const f = getDict(lang).form;
   const values = formObject(formData);
-  const parsed = messageSchema(langOf(formData)).safeParse(values);
+  const parsed = messageSchema(lang).safeParse(values);
   if (!parsed.success) {
     return { ok: false, message: f.msg.review, errors: fieldErrors(parsed.error), values };
   }
@@ -60,10 +83,13 @@ export async function sendMessage(_prev: FormState, formData: FormData): Promise
   const supabase = createPublicClient();
   if (!supabase) return { ok: false, message: f.msg.contactOffline, values };
 
-  const { error } = await supabase.from("messages").insert(parsed.data);
+  const row = { id: randomUUID(), ...parsed.data, lang };
+  const { error } = await supabase.from("messages").insert(row);
   if (error) {
     console.error("sendMessage", error.message);
     return { ok: false, message: f.msg.contactFailed, values };
   }
+  const message: Message = { ...row, is_read: false, created_at: new Date().toISOString() };
+  after(() => notifyNewMessage(message));
   return { ok: true, message: f.msg.contactOk };
 }

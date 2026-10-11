@@ -14,6 +14,8 @@ import {
   Mail,
   Megaphone,
   Menu,
+  Settings,
+  Tags,
   Newspaper,
   X,
 } from "lucide-react";
@@ -29,7 +31,9 @@ const items = [
   { href: "/dashboard/services", label: "الخدمات", Icon: Layers },
   { href: "/dashboard/projects", label: "الأعمال", Icon: BriefcaseBusiness },
   { href: "/dashboard/posts", label: "المدونة", Icon: Newspaper },
+  { href: "/dashboard/pricing", label: "الأسعار والباقات", Icon: Tags },
   { href: "/dashboard/marketing", label: "الحملات الإعلانية", Icon: Megaphone },
+  { href: "/dashboard/settings", label: "الإعدادات", Icon: Settings },
 ];
 
 export function Sidebar({ email, counts }: { email: string; counts: Counts }) {

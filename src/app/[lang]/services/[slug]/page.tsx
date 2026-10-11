@@ -11,6 +11,9 @@ import { pageMeta } from "@/lib/seo";
 import { CtaBand, ProjectCard, ServiceCard } from "@/components/site/parts";
 import { ForwardArrow, ServiceIcon, WhatsAppIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion/Reveal";
+import { Prose } from "@/components/Prose";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbSchema, serviceSchema } from "@/lib/schema";
 import { ServiceArt, hasArt } from "@/components/art/ServiceArt";
 
 export const revalidate = 60;
@@ -25,7 +28,7 @@ export async function generateMetadata(props: PageProps<"/[lang]/services/[slug]
   const { slug } = await props.params;
   const service = await getService(slug, lang);
   if (!service) return {};
-  return pageMeta(lang, `/services/${slug}`, service.title, service.summary, service.image_url);
+  return pageMeta(lang, `/services/${slug}`, service.meta_title || service.title, service.meta_description || service.summary);
 }
 
 export default async function ServicePage(props: PageProps<"/[lang]/services/[slug]">) {
@@ -45,6 +48,16 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
 
   return (
     <>
+      <JsonLd
+        data={[
+          serviceSchema(lang, service),
+          breadcrumbSchema([
+            { name: t.nav.home, path: href(lang, "/") },
+            { name: t.nav.services, path: href(lang, "/services") },
+            { name: service.title, path: href(lang, `/services/${service.slug}`) },
+          ]),
+        ]}
+      />
       <section className="hero-glow relative -mt-[72px] overflow-hidden pt-[72px]">
         <div className="container-x grid items-center gap-10 py-14 lg:grid-cols-2 lg:py-20">
           <div>
@@ -98,6 +111,14 @@ export default async function ServicePage(props: PageProps<"/[lang]/services/[sl
               </li>
             ))}
           </Reveal>
+        </section>
+      )}
+
+      {service.content?.trim() && (
+        <section className="container-x pb-16 sm:pb-20">
+          <div className="mx-auto max-w-3xl">
+            <Prose text={service.content} />
+          </div>
         </section>
       )}
 

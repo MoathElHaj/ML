@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Save } from "lucide-react";
-import { savePost, saveProject, saveService } from "@/actions/admin";
-import type { FormState, Post, Project, Service } from "@/lib/types";
+import { savePackage, savePost, saveProject, saveService } from "@/actions/admin";
+import type { FormState, Package, Post, Project, Service } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 import { FormAlert, SelectField, TextArea, TextField } from "@/components/forms/Field";
 import { ServiceIcon, serviceIconOptions } from "@/components/icons";
 import { ImageField } from "./ImageField";
+import { MarkdownEditor } from "./MarkdownEditor";
+import { SeoFields } from "./SeoFields";
 import { cn } from "@/lib/utils";
 
 const initial: FormState = { ok: false };
@@ -143,6 +145,25 @@ export function ServiceForm({ service }: { service?: Service }) {
           error={e.features}
           hint="ميزة واحدة في كل سطر."
         />
+        <MarkdownEditor
+          label="محتوى صفحة الخدمة (اختياري)"
+          name="content"
+          rows={10}
+          folder="services"
+          defaultValue={v?.content ?? service?.content ?? ""}
+          error={e.content}
+          hint="يظهر في صفحة الخدمة: لمن تناسب، المراحل، الأسئلة الشائعة. محتوى أطول = ظهور أفضل في البحث."
+        />
+      </Card>
+      <Card title="تحسين الظهور في محركات البحث (SEO)">
+        <SeoFields
+          path={`/services/${service?.slug ?? "…"}`}
+          fallbackTitle={service?.title}
+          fallbackDescription={service?.summary}
+          title={v?.meta_title ?? service?.meta_title ?? ""}
+          description={v?.meta_description ?? service?.meta_description ?? ""}
+          errors={e}
+        />
       </Card>
       <EnglishCard>
         <TextField label="Service name" name="title_en" defaultValue={v?.title_en ?? service?.title_en ?? ""} error={e.title_en} />
@@ -155,6 +176,17 @@ export function ServiceForm({ service }: { service?: Service }) {
           defaultValue={v?.features_en ?? service?.features_en?.join("\n") ?? ""}
           error={e.features_en}
           hint="One item per line."
+        />
+        <MarkdownEditor label="Service page content" name="content_en" rows={8} folder="services" dir="ltr" defaultValue={v?.content_en ?? service?.content_en ?? ""} error={e.content_en} />
+        <SeoFields
+          suffix="_en"
+          dir="ltr"
+          path={`/en/services/${service?.slug ?? "…"}`}
+          fallbackTitle={service?.title_en ?? undefined}
+          fallbackDescription={service?.summary_en ?? undefined}
+          title={v?.meta_title_en ?? service?.meta_title_en ?? ""}
+          description={v?.meta_description_en ?? service?.meta_description_en ?? ""}
+          errors={e}
         />
       </EnglishCard>
       <Card title="المظهر">
@@ -216,13 +248,14 @@ export function ProjectForm({ project, services }: { project?: Project; services
           </SelectField>
         </div>
         <TextArea label="ملخص قصير" name="summary" rows={2} defaultValue={v?.summary ?? project?.summary} error={e.summary} />
-        <TextArea
+        <MarkdownEditor
           label="تفاصيل المشروع"
           name="description"
-          rows={8}
+          rows={10}
+          folder="projects"
           defaultValue={v?.description ?? project?.description}
           error={e.description}
-          hint="سطر فارغ بين الفقرات. ابدأ السطر بـ ## لعنوان، وبـ - لقائمة."
+          hint="التحدي، الحل، والنتيجة. يمكنك إدراج صور من المشروع."
         />
         <div className="grid gap-5 sm:grid-cols-2">
           <TextField label="رابط المشروع" name="link_url" type="url" dir="ltr" placeholder="https://" defaultValue={v?.link_url ?? project?.link_url ?? ""} error={e.link_url} />
@@ -232,7 +265,7 @@ export function ProjectForm({ project, services }: { project?: Project; services
       <EnglishCard>
         <TextField label="Project name" name="title_en" defaultValue={v?.title_en ?? project?.title_en ?? ""} error={e.title_en} />
         <TextArea label="Short summary" name="summary_en" rows={2} defaultValue={v?.summary_en ?? project?.summary_en ?? ""} error={e.summary_en} />
-        <TextArea label="Project details" name="description_en" rows={6} defaultValue={v?.description_en ?? project?.description_en ?? ""} error={e.description_en} />
+        <MarkdownEditor label="Project details" name="description_en" rows={8} folder="projects" dir="ltr" defaultValue={v?.description_en ?? project?.description_en ?? ""} error={e.description_en} />
         <TextField label="Tags" name="tags_en" defaultValue={v?.tags_en ?? project?.tags_en?.join(", ") ?? ""} error={e.tags_en} hint="Comma separated, e.g. Restaurants, Branding" />
       </EnglishCard>
       <Card title="صورة الغلاف">
@@ -267,14 +300,25 @@ export function PostForm({ post }: { post?: Post }) {
           <TextField label="الكاتب" name="author_name" defaultValue={v?.author_name ?? post?.author_name ?? "فريق بريق"} error={e.author_name} />
         </div>
         <TextArea label="مقتطف" name="excerpt" rows={2} defaultValue={v?.excerpt ?? post?.excerpt} error={e.excerpt} hint="جملة أو جملتان تظهر في قائمة المقالات ونتائج البحث." />
-        <TextArea
+        <MarkdownEditor
           label="المحتوى"
           name="content"
-          rows={16}
+          rows={18}
           required
+          folder="posts"
           defaultValue={v?.content ?? post?.content}
           error={e.content}
-          hint="سطر فارغ بين الفقرات · ## عنوان رئيسي · ### عنوان فرعي · - عنصر قائمة · > اقتباس · **نص عريض**"
+          hint="استخدم عناوين ## واضحة، وأضف روابط لصفحات خدماتك، وصوراً بوصف مناسب."
+        />
+      </Card>
+      <Card title="تحسين الظهور في محركات البحث (SEO)">
+        <SeoFields
+          path={`/blog/${post?.slug ?? "…"}`}
+          fallbackTitle={post?.title}
+          fallbackDescription={post?.excerpt}
+          title={v?.meta_title ?? post?.meta_title ?? ""}
+          description={v?.meta_description ?? post?.meta_description ?? ""}
+          errors={e}
         />
       </Card>
       <EnglishCard>
@@ -284,7 +328,17 @@ export function PostForm({ post }: { post?: Post }) {
           <TextField label="Category" name="category_en" defaultValue={v?.category_en ?? post?.category_en ?? ""} error={e.category_en} placeholder="e.g. Digital marketing" />
         </div>
         <TextArea label="Excerpt" name="excerpt_en" rows={2} defaultValue={v?.excerpt_en ?? post?.excerpt_en ?? ""} error={e.excerpt_en} />
-        <TextArea label="Content" name="content_en" rows={12} defaultValue={v?.content_en ?? post?.content_en ?? ""} error={e.content_en} hint="Same format as Arabic: blank line between paragraphs, ## heading, - list item, > quote, **bold**" />
+        <MarkdownEditor label="Content" name="content_en" rows={14} folder="posts" dir="ltr" defaultValue={v?.content_en ?? post?.content_en ?? ""} error={e.content_en} />
+        <SeoFields
+          suffix="_en"
+          dir="ltr"
+          path={`/en/blog/${post?.slug ?? "…"}`}
+          fallbackTitle={post?.title_en ?? undefined}
+          fallbackDescription={post?.excerpt_en ?? undefined}
+          title={v?.meta_title_en ?? post?.meta_title_en ?? ""}
+          description={v?.meta_description_en ?? post?.meta_description_en ?? ""}
+          errors={e}
+        />
       </EnglishCard>
       <Card title="صورة الغلاف">
         <ImageField key={state.message ?? "init"} name="cover_url" label="صورة المقال" value={post?.cover_url} error={e.cover_url} />
@@ -298,6 +352,47 @@ export function PostForm({ post }: { post?: Post }) {
         />
       </Card>
       <FormActions pending={pending} cancelHref="/dashboard/posts" state={state} />
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+export function PackageForm({ pkg }: { pkg?: Package }) {
+  const [state, action, pending] = useActionState(savePackage, initial);
+  const e = state.errors ?? {};
+  const v = state.values;
+  return (
+    <form action={action} className="space-y-6" noValidate>
+      {pkg && <input type="hidden" name="id" value={pkg.id} />}
+      <Card title="الباقة">
+        <TextField label="اسم الباقة" name="name" required defaultValue={v?.name ?? pkg?.name} error={e.name} placeholder="مثل: الباقة الاحترافية" />
+        <div className="grid gap-5 sm:grid-cols-3">
+          <TextField label="السعر" name="price" type="number" min={0} step="0.01" dir="ltr" required defaultValue={v?.price ?? (pkg ? String(pkg.price) : "")} error={e.price} />
+          <TextField label="العملة" name="currency" dir="ltr" maxLength={3} defaultValue={v?.currency ?? pkg?.currency ?? "OMR"} error={e.currency} />
+          <SelectField label="المدة" name="period" defaultValue={v?.period ?? pkg?.period ?? "month"}>
+            <option value="month">شهرياً</option>
+            <option value="year">سنوياً</option>
+            <option value="once">دفعة واحدة</option>
+          </SelectField>
+        </div>
+        <TextField label="وصف مختصر" name="tagline" defaultValue={v?.tagline ?? pkg?.tagline} error={e.tagline} placeholder="لمن تناسب هذه الباقة؟" />
+        <TextArea label="ما تشمله الباقة" name="features" rows={6} required defaultValue={v?.features ?? pkg?.features.join("\n")} error={e.features} hint="ميزة واحدة في كل سطر." />
+        <TextField label="نص الزر" name="cta" defaultValue={v?.cta ?? pkg?.cta ?? ""} error={e.cta} placeholder="مثل: اختر الباقة الاحترافية" />
+      </Card>
+      <EnglishCard>
+        <TextField label="Package name" name="name_en" defaultValue={v?.name_en ?? pkg?.name_en ?? ""} error={e.name_en} />
+        <TextField label="Short description" name="tagline_en" defaultValue={v?.tagline_en ?? pkg?.tagline_en ?? ""} error={e.tagline_en} />
+        <TextArea label="What's included" name="features_en" rows={6} defaultValue={v?.features_en ?? pkg?.features_en?.join("\n") ?? ""} error={e.features_en} hint="One item per line." />
+        <TextField label="Button text" name="cta_en" defaultValue={v?.cta_en ?? pkg?.cta_en ?? ""} error={e.cta_en} />
+      </EnglishCard>
+      <Card title="العرض">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Toggle name="is_published" label="ظاهرة في صفحة الأسعار" defaultChecked={v ? v.is_published === "on" : pkg?.is_published ?? true} />
+          <Toggle name="is_featured" label="«الأكثر طلباً»" hint="تُميَّز في المنتصف" defaultChecked={v ? v.is_featured === "on" : pkg?.is_featured} />
+          <TextField label="ترتيب الظهور" name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(pkg?.sort_order ?? 0)} error={e.sort_order} hint="الأصغر يظهر أولاً." />
+        </div>
+      </Card>
+      <FormActions pending={pending} cancelHref="/dashboard/pricing" state={state} />
     </form>
   );
 }

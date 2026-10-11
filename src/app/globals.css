@@ -221,7 +221,13 @@
   .prose-bariq p { margin: 0 0 20px; }
   .prose-bariq ul { margin: 0 0 20px; padding-inline-start: 22px; list-style: disc; }
   .prose-bariq li { margin-bottom: 8px; }
-  .prose-bariq li::marker { color: var(--color-accent); }
+  .prose-bariq ol { margin: 0 0 20px; padding-inline-start: 22px; list-style: decimal; }
+  .prose-bariq li::marker { color: var(--color-accent); font-weight: 600; }
+  .prose-bariq a { color: var(--color-accent); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+  .prose-bariq a:hover { text-decoration-thickness: 2.5px; }
+  .prose-bariq figure { margin: 28px 0; }
+  .prose-bariq figure img { width: 100%; height: auto; border-radius: 20px; border: 1px solid var(--color-line); }
+  .prose-bariq figcaption { margin-top: 10px; text-align: center; font-size: 14px; color: var(--color-muted); }
   .prose-bariq blockquote {
     margin: 24px 0;
     padding: 16px 20px;

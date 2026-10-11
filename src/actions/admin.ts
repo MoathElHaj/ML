@@ -2,10 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { notifyConfirmed } from "@/lib/email";
+import { getBookingSettings } from "@/lib/settings";
 import { z } from "zod";
 import { getAdmin } from "@/lib/supabase/server";
 import { fieldErrors, formObject } from "@/lib/validation";
-import type { ConsultationStatus, FormState } from "@/lib/types";
+import type { Consultation, ConsultationStatus, FormState } from "@/lib/types";
 
 type Admin = NonNullable<Awaited<ReturnType<typeof getAdmin>>>;
 
@@ -97,6 +100,12 @@ const serviceSchema = z.object({
   summary_en: optional(300),
   description_en: optional(5000),
   features_en: z.string().default("").transform(lines),
+  content: z.string().trim().max(30000).default(""),
+  content_en: optional(30000),
+  meta_title: optional(120),
+  meta_title_en: optional(120),
+  meta_description: optional(300),
+  meta_description_en: optional(300),
   sort_order: z.coerce.number().int().min(0).max(999),
   is_published: checkbox,
 });
@@ -196,6 +205,10 @@ const postSchema = z.object({
   excerpt_en: optional(400),
   content_en: optional(50000),
   category_en: optional(80),
+  meta_title: optional(120),
+  meta_title_en: optional(120),
+  meta_description: optional(300),
+  meta_description_en: optional(300),
   is_published: checkbox,
 });
 
@@ -235,8 +248,23 @@ export async function updateConsultationStatus(formData: FormData) {
   const admin = await requireAdmin();
   const status = String(formData.get("status")) as ConsultationStatus;
   if (!STATUSES.includes(status)) return;
-  await admin.supabase.from("consultations").update({ status }).eq("id", String(formData.get("id")));
+  const { data } = await admin.supabase.from("consultations").update({ status }).eq("id", String(formData.get("id"))).select("*").maybeSingle();
+  // Confirming a booking emails the client a confirmation with a calendar invite.
+  if (status === "confirmed" && data) {
+    const c = data as Consultation;
+    const booking = await getBookingSettings();
+    after(() => notifyConfirmed(c, booking.duration_minutes, booking.time_zone));
+  }
   revalidatePath("/dashboard", "layout");
+}
+
+export async function resendConfirmation(formData: FormData) {
+  const admin = await requireAdmin();
+  const { data } = await admin.supabase.from("consultations").select("*").eq("id", String(formData.get("id"))).maybeSingle();
+  if (!data) return;
+  const booking = await getBookingSettings();
+  await notifyConfirmed(data as Consultation, booking.duration_minutes, booking.time_zone);
+  revalidatePath("/dashboard/consultations");
 }
 
 export async function saveConsultationNotes(formData: FormData) {
@@ -254,15 +282,22 @@ export async function rescheduleConsultation(_prev: FormState, formData: FormDat
   const day = String(formData.get("scheduled_date") ?? "");
   const time = String(formData.get("scheduled_time") ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !/^\d{2}:\d{2}$/.test(time)) return { ok: false, message: "اختر تاريخاً ووقتاً صحيحين." };
-  const { error } = await admin.supabase
+  const { data, error } = await admin.supabase
     .from("consultations")
-    .update({ scheduled_date: day, scheduled_time: time })
-    .eq("id", String(formData.get("id")));
+    .update({ scheduled_date: day, scheduled_time: time, reminder_sent_at: null })
+    .eq("id", String(formData.get("id")))
+    .select("*")
+    .maybeSingle();
   if (error) {
     return { ok: false, message: error.code === "23505" ? "يوجد حجز آخر في هذا الموعد." : `تعذّر الحفظ: ${error.message}` };
   }
+  // A confirmed booking that moves gets a fresh confirmation with the new time.
+  if (data && (data as Consultation).status === "confirmed") {
+    const booking = await getBookingSettings();
+    after(() => notifyConfirmed(data as Consultation, booking.duration_minutes, booking.time_zone));
+  }
   revalidatePath("/dashboard", "layout");
-  return { ok: true, message: "تم تحديث الموعد." };
+  return { ok: true, message: data?.status === "confirmed" ? "تم تحديث الموعد وإرسال التأكيد الجديد للعميل." : "تم تحديث الموعد." };
 }
 
 export async function deleteConsultation(formData: FormData) {
@@ -287,4 +322,72 @@ export async function deleteMessage(formData: FormData) {
   const admin = await requireAdmin();
   await admin.supabase.from("messages").delete().eq("id", String(formData.get("id")));
   revalidatePath("/dashboard", "layout");
+}
+
+// ---------------------------------------------------------------------------
+// Pricing packages
+// ---------------------------------------------------------------------------
+const packageSchema = z.object({
+  name: z.string().trim().min(2, "أدخل اسم الباقة").max(80),
+  name_en: optional(80),
+  price: z.coerce.number({ message: "أدخل السعر" }).min(0, "السعر لا يكون سالباً").max(1000000),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, "رمز عملة من 3 أحرف مثل OMR"),
+  period: z.enum(["month", "year", "once"]),
+  tagline: z.string().trim().max(200),
+  tagline_en: optional(200),
+  features: z.string().transform(lines).refine((v) => v.length > 0, "أضف ميزة واحدة على الأقل"),
+  features_en: z.string().default("").transform(lines),
+  cta: optional(60),
+  cta_en: optional(60),
+  sort_order: z.coerce.number().int().min(0).max(999),
+  is_featured: checkbox,
+  is_published: checkbox,
+});
+
+export async function savePackage(_prev: FormState, formData: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const values = formObject(formData);
+  const parsed = packageSchema.safeParse(values);
+  if (!parsed.success) return { ok: false, message: "راجع الحقول المظللة.", errors: fieldErrors(parsed.error), values };
+  const id = String(formData.get("id") ?? "");
+  // Only one package carries the "most popular" badge.
+  if (parsed.data.is_featured) {
+    let q = admin.supabase.from("packages").update({ is_featured: false }).eq("is_featured", true);
+    if (id) q = q.neq("id", id);
+    await q;
+  }
+  const { error } = id
+    ? await admin.supabase.from("packages").update(parsed.data).eq("id", id)
+    : await admin.supabase.from("packages").insert(parsed.data);
+  if (error) return { ok: false, message: `تعذّر الحفظ: ${error.message}`, values };
+  refreshSite();
+  redirect("/dashboard/pricing?saved=1");
+}
+
+export async function deletePackage(formData: FormData) {
+  const admin = await requireAdmin();
+  await admin.supabase.from("packages").delete().eq("id", String(formData.get("id")));
+  refreshSite();
+}
+
+export async function togglePackage(formData: FormData) {
+  const admin = await requireAdmin();
+  await admin.supabase
+    .from("packages")
+    .update({ is_published: formData.get("value") === "true" })
+    .eq("id", String(formData.get("id")));
+  refreshSite();
+}
+
+// ---------------------------------------------------------------------------
+// Images inside article / project / service content
+// ---------------------------------------------------------------------------
+export async function uploadContentImage(formData: FormData): Promise<{ url?: string; error?: string }> {
+  const admin = await requireAdmin();
+  const folder = String(formData.get("folder") ?? "content").replace(/[^a-z-]/g, "") || "content";
+  const fd = new FormData();
+  fd.set("img_file", formData.get("file") as File);
+  const res = await resolveImage(admin, fd, "img", folder);
+  if ("error" in res) return { error: res.error };
+  return res.url ? { url: res.url } : { error: "اختر صورة." };
 }

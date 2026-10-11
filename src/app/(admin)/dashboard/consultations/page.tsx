@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Building2, CalendarDays, Clock, Mail, MessageSquareText, Phone, Trash2, Video } from "lucide-react";
+import { BellRing, Building2, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock, Download, LayoutList, Mail, MailCheck, MessageSquareText, Phone, Trash2, Video } from "lucide-react";
 import { getAdmin } from "@/lib/supabase/server";
-import { deleteConsultation, saveConsultationNotes, updateConsultationStatus } from "@/actions/admin";
-import { booking, channels } from "@/lib/site";
+import { deleteConsultation, resendConfirmation, saveConsultationNotes, updateConsultationStatus } from "@/actions/admin";
+import { channels } from "@/lib/site";
+import { getBookingSettings } from "@/lib/settings";
 import type { Consultation, Service } from "@/lib/types";
-import { addDays, cn, dayOfMonth, formatDay, formatShortWeekday, formatTime, todayIn } from "@/lib/utils";
+import { addDays, cn, dayOfMonth, formatDate, formatDay, formatShortWeekday, formatTime, todayIn } from "@/lib/utils";
 import { ConfirmButton, SubmitButton } from "@/components/dashboard/ConfirmButton";
 import { RescheduleForm, StatusSelect } from "@/components/dashboard/ConsultationControls";
 import { EmptyRow, Panel, StatusBadge } from "@/components/dashboard/ui";
@@ -32,7 +33,9 @@ export default async function ConsultationsAdmin(props: PageProps<"/dashboard/co
   const sp = await props.searchParams;
   const tab = (typeof sp.status === "string" ? sp.status : "upcoming") as (typeof tabs)[number]["key"];
   const day = typeof sp.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(sp.day) ? sp.day : null;
-  const today = todayIn(booking.timeZone);
+  const booking = await getBookingSettings();
+  const today = todayIn(booking.time_zone);
+  const view = sp.view === "calendar" ? "calendar" : "list";
 
   // Two-week strip with booking counts.
   const week = Array.from({ length: 14 }, (_, i) => addDays(today, i));
@@ -66,10 +69,44 @@ export default async function ConsultationsAdmin(props: PageProps<"/dashboard/co
 
   return (
     <>
-      <div className="mb-6">
-        <h1 className="text-[28px] font-bold text-night">جدول الاستشارات</h1>
-        <p className="mt-1 text-muted">الحجوزات التي يرسلها العملاء من صفحة «احجز استشارة». أكّد الموعد وتواصل مع العميل مباشرة.</p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold text-night">جدول الاستشارات</h1>
+          <p className="mt-1 text-muted">الحجوزات التي يرسلها العملاء من صفحة «احجز استشارة». أكّد الموعد وتواصل مع العميل مباشرة.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <div className="flex rounded-full border-[1.5px] border-line bg-white p-1" role="group" aria-label="طريقة العرض">
+            {[
+              { key: "list", label: "قائمة", Icon: LayoutList },
+              { key: "calendar", label: "تقويم", Icon: CalendarDays },
+            ].map(({ key, label, Icon }) => (
+              <Link
+                key={key}
+                href={key === "calendar" ? "/dashboard/consultations?view=calendar" : "/dashboard/consultations"}
+                aria-current={view === key ? "page" : undefined}
+                className={cn("inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-semibold", view === key ? "bg-night text-white" : "text-night hover:text-violet")}
+              >
+                <Icon className="size-4" aria-hidden />
+                {label}
+              </Link>
+            ))}
+          </div>
+          <a href="/api/export/consultations" download className="btn btn-outline btn-sm">
+            <Download className="size-4" aria-hidden />
+            تصدير Excel
+          </a>
+          <Link href="/dashboard/settings?tab=booking" className="btn btn-outline btn-sm">
+            إعدادات المواعيد
+          </Link>
+        </div>
       </div>
+
+      <Stats db={admin.supabase} today={today} />
+
+      {view === "calendar" ? (
+        <MonthCalendar db={admin.supabase} today={today} month={typeof sp.month === "string" ? sp.month : undefined} />
+      ) : (
+      <>
 
       <Panel className="mb-6 p-4">
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
@@ -153,6 +190,24 @@ export default async function ConsultationsAdmin(props: PageProps<"/dashboard/co
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-lg font-bold text-night">{c.full_name}</h3>
                           <StatusBadge status={c.status} />
+                          {c.status === "confirmed" && c.email && (
+                            <span
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold",
+                                c.confirmation_sent_at ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-zinc-200 bg-zinc-100 text-zinc-700",
+                              )}
+                              title={c.confirmation_sent_at ? `أُرسل ${formatDate(c.confirmation_sent_at)}` : undefined}
+                            >
+                              <MailCheck className="size-3.5" aria-hidden />
+                              {c.confirmation_sent_at ? "أُرسل التأكيد" : "لم يُرسل التأكيد"}
+                            </span>
+                          )}
+                          {c.reminder_sent_at && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-lilac bg-lilac-50 px-2 py-0.5 text-xs font-semibold text-violet" title={formatDate(c.reminder_sent_at)}>
+                              <BellRing className="size-3.5" aria-hidden />
+                              أُرسل التذكير
+                            </span>
+                          )}
                         </div>
                         <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted">
                           {c.company && (
@@ -213,7 +268,7 @@ export default async function ConsultationsAdmin(props: PageProps<"/dashboard/co
                                 حفظ الملاحظات
                               </SubmitButton>
                             </form>
-                            <RescheduleForm id={c.id} date={c.scheduled_date} time={c.scheduled_time} />
+                            <RescheduleForm id={c.id} date={c.scheduled_date} time={c.scheduled_time} slots={booking.slots} />
                           </div>
                         </details>
                       </div>
@@ -229,6 +284,15 @@ export default async function ConsultationsAdmin(props: PageProps<"/dashboard/co
                           </form>
                         )}
                         <StatusSelect id={c.id} status={c.status} name={c.full_name} />
+                        {c.status === "confirmed" && c.email && (
+                          <form action={resendConfirmation}>
+                            <input type="hidden" name="id" value={c.id} />
+                            <SubmitButton className="btn btn-outline btn-sm w-full" pendingText="جارٍ الإرسال…">
+                              <Mail className="size-4" aria-hidden />
+                              {c.confirmation_sent_at ? "إعادة إرسال التأكيد" : "إرسال التأكيد"}
+                            </SubmitButton>
+                          </form>
+                        )}
                         <form action={deleteConsultation}>
                           <input type="hidden" name="id" value={c.id} />
                           <ConfirmButton className="btn btn-danger btn-sm w-full" message={`حذف حجز ${c.full_name} نهائياً؟`} aria-label={`حذف حجز ${c.full_name}`}>
@@ -245,6 +309,145 @@ export default async function ConsultationsAdmin(props: PageProps<"/dashboard/co
           ))}
         </div>
       )}
+      </>
+      )}
     </>
+  );
+}
+
+type Db = NonNullable<Awaited<ReturnType<typeof getAdmin>>>["supabase"];
+
+async function Stats({ db, today }: { db: Db; today: string }) {
+  const monthStart = today.slice(0, 8) + "01";
+  const count = (q: PromiseLike<{ count: number | null }>) => q.then((r) => r.count ?? 0);
+  const base = () => db.from("consultations").select("id", { count: "exact", head: true });
+  const [todayN, pending, upcoming, month] = await Promise.all([
+    count(base().eq("scheduled_date", today).in("status", ["pending", "confirmed"])),
+    count(base().eq("status", "pending").gte("scheduled_date", today)),
+    count(base().gte("scheduled_date", today).eq("status", "confirmed")),
+    count(base().gte("created_at", monthStart)),
+  ]);
+  const cards = [
+    { label: "مواعيد اليوم", value: todayN, Icon: Clock, href: `/dashboard/consultations?day=${today}` },
+    { label: "بانتظار التأكيد", value: pending, Icon: BellRing, href: "/dashboard/consultations?status=pending", warn: pending > 0 },
+    { label: "مؤكدة قادمة", value: upcoming, Icon: CheckCircle2, href: "/dashboard/consultations?status=upcoming" },
+    { label: "حجوزات هذا الشهر", value: month, Icon: CalendarDays, href: "/dashboard/consultations?status=all" },
+  ];
+  return (
+    <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {cards.map(({ label, value, Icon, href, warn }) => (
+        <Link key={label} href={href} className={cn("rounded-[20px] border bg-white p-4 transition-colors hover:border-violet", warn ? "border-amber-300" : "border-line")}>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted">{label}</span>
+            <Icon className={cn("size-5", warn ? "text-amber-600" : "text-violet")} aria-hidden />
+          </div>
+          <p className="mt-2 text-3xl font-bold text-night">{value}</p>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+const WEEKDAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+async function MonthCalendar({ db, today, month: raw }: { db: Db; today: string; month?: string }) {
+  const month = raw && /^\d{4}-\d{2}$/.test(raw) ? raw : today.slice(0, 7);
+  const [y, m] = month.split("-").map(Number);
+  const first = `${month}-01`;
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const last = `${month}-${String(daysInMonth).padStart(2, "0")}`;
+  const lead = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(); // Sunday-first grid
+  const shift = (n: number) => {
+    const d = new Date(Date.UTC(y, m - 1 + n, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  };
+  const title = new Intl.DateTimeFormat("ar", { month: "long", year: "numeric", timeZone: "UTC", numberingSystem: "latn" }).format(new Date(Date.UTC(y, m - 1, 1)));
+
+  const [{ data }, { data: blocked }] = await Promise.all([
+    db.from("consultations").select("id, full_name, scheduled_date, scheduled_time, status").gte("scheduled_date", first).lte("scheduled_date", last).neq("status", "cancelled").order("scheduled_time"),
+    db.from("blocked_dates").select("day, reason").gte("day", first).lte("day", last),
+  ]);
+  const byDay = new Map<string, Pick<Consultation, "id" | "full_name" | "scheduled_time" | "status">[]>();
+  for (const c of data ?? []) byDay.set(c.scheduled_date, [...(byDay.get(c.scheduled_date) ?? []), c]);
+  const off = new Map((blocked ?? []).map((b) => [b.day, b.reason as string | null]));
+
+  const cells: (string | null)[] = [...Array(lead).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => addDays(first, i))];
+  while (cells.length % 7) cells.push(null);
+
+  return (
+    <Panel className="p-0">
+      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
+        <Link href={`/dashboard/consultations?view=calendar&month=${shift(-1)}`} className="btn btn-outline btn-sm" aria-label="الشهر السابق">
+          <ChevronRight className="size-4" aria-hidden />
+        </Link>
+        <div className="text-center">
+          <h2 className="text-lg font-bold text-night">{title}</h2>
+          {month !== today.slice(0, 7) && (
+            <Link href="/dashboard/consultations?view=calendar" className="text-xs font-semibold text-violet hover:underline">
+              العودة إلى الشهر الحالي
+            </Link>
+          )}
+        </div>
+        <Link href={`/dashboard/consultations?view=calendar&month=${shift(1)}`} className="btn btn-outline btn-sm" aria-label="الشهر التالي">
+          <ChevronLeft className="size-4" aria-hidden />
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="grid min-w-[720px] grid-cols-7">
+          {WEEKDAYS.map((w) => (
+            <div key={w} className="border-b border-line px-2 py-2 text-center text-xs font-semibold text-muted">
+              {w}
+            </div>
+          ))}
+          {cells.map((d, i) => {
+            if (!d) return <div key={`e${i}`} className="min-h-28 border-b border-e border-line bg-zinc-50/60" />;
+            const items = byDay.get(d) ?? [];
+            const reason = off.get(d);
+            const isOff = off.has(d);
+            return (
+              <div key={d} className={cn("min-h-28 border-b border-e border-line p-1.5", isOff && "bg-zinc-50", d < today && "opacity-60")}>
+                <Link
+                  href={`/dashboard/consultations?day=${d}`}
+                  className={cn("mb-1 inline-flex size-7 items-center justify-center rounded-full text-sm font-bold", d === today ? "bg-violet text-white" : "text-night hover:bg-lilac-50")}
+                  aria-label={`${formatDay(d)}: ${items.length} حجز`}
+                >
+                  {dayOfMonth(d)}
+                </Link>
+                {isOff && <p className="truncate text-[11px] font-semibold text-zinc-500" title={reason ?? undefined}>إجازة{reason ? ` · ${reason}` : ""}</p>}
+                <ul className="space-y-1">
+                  {items.slice(0, 3).map((c) => (
+                    <li key={c.id}>
+                      <Link
+                        href={`/dashboard/consultations?day=${d}`}
+                        className={cn(
+                          "block truncate rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+                          c.status === "pending" ? "bg-amber-100 text-amber-900" : c.status === "completed" ? "bg-zinc-100 text-zinc-700" : "bg-lilac-100 text-violet",
+                        )}
+                        title={`${formatTime(c.scheduled_time)} · ${c.full_name}`}
+                      >
+                        <span dir="ltr">{c.scheduled_time.slice(0, 5)}</span> {c.full_name}
+                      </Link>
+                    </li>
+                  ))}
+                  {items.length > 3 && (
+                    <li>
+                      <Link href={`/dashboard/consultations?day=${d}`} className="px-1.5 text-[11px] font-semibold text-violet hover:underline">
+                        +{items.length - 3} أخرى
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-4 px-5 py-3 text-xs text-muted">
+        <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-lilac-100" aria-hidden />مؤكد</span>
+        <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-amber-100" aria-hidden />بانتظار التأكيد</span>
+        <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded bg-zinc-100" aria-hidden />مكتمل</span>
+        <span className="inline-flex items-center gap-1.5"><span className="size-3 rounded border border-line bg-zinc-50" aria-hidden />إجازة</span>
+      </div>
+    </Panel>
   );
 }

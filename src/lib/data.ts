@@ -1,8 +1,8 @@
 import "server-only";
 import { createPublicClient } from "./supabase/public";
-import { defaultServices } from "./content";
+import { defaultServices, getMarketingPackages } from "./content";
 import { pick, type Lang } from "./i18n";
-import type { Post, Project, Service } from "./types";
+import type { Package, Post, Project, Service } from "./types";
 
 const PROJECT_FIELDS = "*, services(title, title_en, slug)";
 
@@ -14,6 +14,9 @@ export function localizeService(s: Service, lang: Lang): Service {
     summary: pick(lang, s.summary, s.summary_en),
     description: pick(lang, s.description, s.description_en),
     features: pick(lang, s.features, s.features_en),
+    content: pick(lang, s.content ?? "", s.content_en),
+    meta_title: pick(lang, s.meta_title ?? null, s.meta_title_en),
+    meta_description: pick(lang, s.meta_description ?? null, s.meta_description_en),
   };
 }
 
@@ -41,6 +44,8 @@ export function localizePost(p: Post, lang: Lang): Post {
     excerpt: p.excerpt_en?.trim() || "",
     content: p.content_en!,
     category: p.category_en?.trim() || null,
+    meta_title: p.meta_title_en?.trim() || null,
+    meta_description: p.meta_description_en?.trim() || null,
   };
 }
 
@@ -127,4 +132,40 @@ export async function getPost(slug: string, lang: Lang = "ar"): Promise<Post | n
   if (!supabase) return null;
   const { data } = await supabase.from("posts").select("*").eq("slug", slug).eq("is_published", true).maybeSingle();
   return data ? localizePost(data as Post, lang) : null;
+}
+
+export type ViewPackage = {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  period: Package["period"];
+  tagline: string;
+  features: string[];
+  cta: string;
+  featured: boolean;
+};
+
+/** Published pricing packages in the visitor's language (falls back to the built-in three). */
+export async function getPackages(lang: Lang): Promise<ViewPackage[]> {
+  const fallback = () =>
+    getMarketingPackages(lang).map((p) => ({ ...p, currency: "OMR", period: "month" as const }));
+  const supabase = createPublicClient();
+  if (!supabase) return fallback();
+  const { data, error } = await supabase.from("packages").select("*").eq("is_published", true).order("sort_order").order("created_at");
+  if (error) {
+    console.error("getPackages", error.message);
+    return fallback();
+  }
+  return (data as Package[]).map((p) => ({
+    id: p.id,
+    name: pick(lang, p.name, p.name_en),
+    price: Number(p.price),
+    currency: p.currency,
+    period: p.period,
+    tagline: pick(lang, p.tagline, p.tagline_en),
+    features: pick(lang, p.features, p.features_en),
+    cta: pick(lang, p.cta ?? "", p.cta_en) || (lang === "ar" ? `اختر ${p.name}` : `Choose ${p.name_en || p.name}`),
+    featured: p.is_featured,
+  }));
 }

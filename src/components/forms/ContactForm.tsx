@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { trackLead } from "@/lib/track";
 import { Send } from "lucide-react";
 import { sendMessage } from "@/actions/public";
 import type { FormState } from "@/lib/types";
@@ -14,6 +15,10 @@ export function ContactForm({ lang }: { lang: Lang }) {
   const [state, action, pending] = useActionState(sendMessage, initial);
   const e = state.errors ?? {};
   const v = state.values ?? {};
+
+  useEffect(() => {
+    if (state.ok) trackLead("contact");
+  }, [state.ok]);
 
   if (state.ok && state.message) {
     return (

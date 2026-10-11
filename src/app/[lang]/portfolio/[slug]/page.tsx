@@ -8,6 +8,8 @@ import { getDict, href, langFrom } from "@/lib/i18n";
 import { pageMeta } from "@/lib/seo";
 import { Prose } from "@/components/Prose";
 import { CtaBand } from "@/components/site/parts";
+import { JsonLd } from "@/components/JsonLd";
+import { breadcrumbSchema, projectSchema } from "@/lib/schema";
 
 export const revalidate = 60;
 
@@ -28,6 +30,16 @@ export default async function ProjectPage(props: PageProps<"/[lang]/portfolio/[s
 
   return (
     <>
+      <JsonLd
+        data={[
+          projectSchema(lang, project),
+          breadcrumbSchema([
+            { name: t.nav.home, path: href(lang, "/") },
+            { name: t.nav.portfolio, path: href(lang, "/portfolio") },
+            { name: project.title, path: href(lang, `/portfolio/${project.slug}`) },
+          ]),
+        ]}
+      />
       <section className="hero-glow relative -mt-[72px] pt-[72px]">
         <div className="container-x py-12 sm:py-16">
           <nav aria-label={t.nav.breadcrumb} className="text-sm text-muted">

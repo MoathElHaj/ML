@@ -2,7 +2,6 @@
 
 import { useActionState, useRef } from "react";
 import { rescheduleConsultation, updateConsultationStatus } from "@/actions/admin";
-import { booking } from "@/lib/site";
 import type { ConsultationStatus, FormState } from "@/lib/types";
 import { formatTime } from "@/lib/utils";
 import { statusMeta } from "./ui";
@@ -34,10 +33,10 @@ export function StatusSelect({ id, status, name }: { id: string; status: Consult
 
 const initial: FormState = { ok: false };
 
-export function RescheduleForm({ id, date, time }: { id: string; date: string; time: string }) {
+export function RescheduleForm({ id, date, time, slots: available }: { id: string; date: string; time: string; slots: string[] }) {
   const [state, action, pending] = useActionState(rescheduleConsultation, initial);
   const current = time.slice(0, 5);
-  const slots = booking.slots.includes(current) ? booking.slots : [current, ...booking.slots];
+  const slots = available.includes(current) ? available : [current, ...available];
   return (
     <form action={action} className="flex flex-wrap items-end gap-2">
       <input type="hidden" name="id" value={id} />

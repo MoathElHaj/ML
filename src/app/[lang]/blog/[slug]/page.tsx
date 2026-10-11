@@ -11,6 +11,8 @@ import { formatDate, readingMinutes } from "@/lib/utils";
 import { Prose } from "@/components/Prose";
 import { CtaBand, PostCard } from "@/components/site/parts";
 import { LinkedInIcon, WhatsAppIcon, XIcon } from "@/components/icons";
+import { JsonLd } from "@/components/JsonLd";
+import { articleSchema, breadcrumbSchema } from "@/lib/schema";
 
 export const revalidate = 60;
 
@@ -20,7 +22,7 @@ export async function generateMetadata(props: PageProps<"/[lang]/blog/[slug]">):
   const post = await getPost(slug, lang);
   if (!post) return {};
   return {
-    ...pageMeta(lang, `/blog/${slug}`, post.title, post.excerpt),
+    ...pageMeta(lang, `/blog/${slug}`, post.meta_title || post.title, post.meta_description || post.excerpt),
     openGraph: { type: "article", publishedTime: post.published_at ?? undefined, images: [post.cover_url || "/images/blog-default.jpg"] },
   };
 }
@@ -47,6 +49,16 @@ export default async function PostPage(props: PageProps<"/[lang]/blog/[slug]">) 
 
   return (
     <>
+      <JsonLd
+        data={[
+          articleSchema(lang, post),
+          breadcrumbSchema([
+            { name: t.nav.home, path: href(lang, "/") },
+            { name: t.nav.blog, path: href(lang, "/blog") },
+            { name: post.title, path: href(lang, `/blog/${post.slug}`) },
+          ]),
+        ]}
+      />
       <article>
         <header className="hero-glow relative -mt-[72px] pt-[72px]">
           <div className="container-x max-w-4xl py-12 text-center sm:py-16">

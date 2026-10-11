@@ -1,10 +1,11 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import { trackLead } from "@/lib/track";
 import Link from "next/link";
 import { CalendarCheck, CheckCircle2, Loader2 } from "lucide-react";
 import { bookConsultation, getBookedSlots } from "@/actions/public";
-import { booking, whatsappLink } from "@/lib/site";
+import { whatsappLink } from "@/lib/site";
 import { getDict, href, type Lang } from "@/lib/i18n";
 import type { FormState } from "@/lib/types";
 import { addDays, cn, dayOfMonth, formatDay, formatShortMonth, formatShortWeekday, formatTime, todayIn, weekdayOf } from "@/lib/utils";
@@ -13,12 +14,15 @@ import { WhatsAppIcon } from "@/components/icons";
 
 const initial: FormState = { ok: false };
 
-function availableDays() {
-  const today = todayIn(booking.timeZone);
+/** Booking rules from the dashboard settings. */
+export type BookingFormRules = { working_days: number[]; slots: string[]; days_ahead: number; duration_minutes: number; time_zone: string; blocked: string[] };
+
+function availableDays(rules: BookingFormRules) {
+  const today = todayIn(rules.time_zone);
   const days: string[] = [];
-  for (let i = 1; i <= booking.daysAhead; i++) {
+  for (let i = 1; i <= rules.days_ahead; i++) {
     const d = addDays(today, i);
-    if (booking.workingDays.includes(weekdayOf(d))) days.push(d);
+    if (rules.working_days.includes(weekdayOf(d)) && !rules.blocked.includes(d)) days.push(d);
   }
   return days;
 }
@@ -27,16 +31,18 @@ export function BookingForm({
   lang,
   services,
   defaultService,
+  rules,
 }: {
   lang: Lang;
   services: { slug: string; title: string }[];
   defaultService?: string;
+  rules: BookingFormRules;
 }) {
   const t = getDict(lang);
   const b = t.booking;
   const f = t.form;
   const [state, action, pending] = useActionState(bookConsultation, initial);
-  const [days] = useState(availableDays);
+  const [days] = useState(() => availableDays(rules));
   const [day, setDay] = useState("");
   const [picked, setPicked] = useState("");
   const [taken, setTaken] = useState<string[]>([]);
@@ -55,6 +61,10 @@ export function BookingForm({
   useEffect(() => {
     if (e.scheduled_time && day) getBookedSlots(day).then(setTaken);
   }, [e.scheduled_time, day]);
+
+  useEffect(() => {
+    if (state.ok) trackLead("booking");
+  }, [state.ok]);
 
   const time = taken.includes(picked) ? "" : picked;
   const setTime = setPicked;
@@ -146,7 +156,7 @@ export function BookingForm({
           <p className="mt-3 text-[15px] text-muted">{b.pickDayFirst}</p>
         ) : (
           <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4" role="radiogroup" aria-label={b.timesAria}>
-            {booking.slots.map((s) => {
+            {rules.slots.map((s) => {
               const isTaken = taken.includes(s);
               const selected = s === time;
               return (
@@ -171,7 +181,7 @@ export function BookingForm({
           </div>
         )}
         {e.scheduled_time && <p className="field-error">{e.scheduled_time}</p>}
-        <p className="field-hint">{b.slotHint(booking.durationMinutes)}</p>
+        <p className="field-hint">{b.slotHint(rules.duration_minutes)}</p>
       </fieldset>
 
       <fieldset>

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getAdmin } from "@/lib/supabase/server";
 import type { Consultation, Message } from "@/lib/types";
 import { formatDate, formatDay, formatTime, todayIn } from "@/lib/utils";
-import { booking } from "@/lib/site";
+import { getBookingSettings } from "@/lib/settings";
 import { EmptyRow, Panel, StatusBadge } from "@/components/dashboard/ui";
 
 export const metadata = { title: "نظرة عامة" };
@@ -13,7 +13,8 @@ export default async function DashboardHome() {
   const admin = await getAdmin();
   if (!admin) redirect("/login");
   const db = admin.supabase;
-  const today = todayIn(booking.timeZone);
+  const booking = await getBookingSettings();
+  const today = todayIn(booking.time_zone);
 
   const [pending, todayCount, unread, posts, projects, upcoming, messages] = await Promise.all([
     db.from("consultations").select("id", { count: "exact", head: true }).eq("status", "pending"),

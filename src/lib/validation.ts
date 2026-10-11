@@ -1,11 +1,13 @@
 import { z } from "zod";
-import { booking } from "./site";
 import { addDays, todayIn, weekdayOf } from "./utils";
 import { getDict, type Lang } from "./i18n";
 
+/** The booking rules the form is checked against (from dashboard settings). */
+export type BookingRules = { working_days: number[]; slots: string[]; days_ahead: number; time_zone: string };
+
 const PHONE = /^\+?[0-9\s-]{6,20}$/;
 
-export function consultationSchema(lang: Lang) {
+export function consultationSchema(lang: Lang, booking: BookingRules, blockedDays: string[] = []) {
   const e = getDict(lang).form.errors;
   const optionalText = (max: number) =>
     z
@@ -32,10 +34,10 @@ export function consultationSchema(lang: Lang) {
       message: optionalText(2000),
     })
     .superRefine((v, ctx) => {
-      const today = todayIn(booking.timeZone);
-      if (v.scheduled_date <= today || v.scheduled_date > addDays(today, booking.daysAhead)) {
+      const today = todayIn(booking.time_zone);
+      if (v.scheduled_date <= today || v.scheduled_date > addDays(today, booking.days_ahead)) {
         ctx.addIssue({ code: "custom", path: ["scheduled_date"], message: e.dayRange });
-      } else if (!booking.workingDays.includes(weekdayOf(v.scheduled_date))) {
+      } else if (!booking.working_days.includes(weekdayOf(v.scheduled_date)) || blockedDays.includes(v.scheduled_date)) {
         ctx.addIssue({ code: "custom", path: ["scheduled_date"], message: e.dayOff });
       }
     });
