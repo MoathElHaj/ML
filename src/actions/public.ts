@@ -1,7 +1,9 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { cookies } from "next/headers";
 import { after } from "next/server";
+import { ATTRIBUTION_COOKIE, cleanAttribution } from "@/lib/attribution";
 import { createPublicClient } from "@/lib/supabase/public";
 import { createServiceClient } from "@/lib/supabase/service";
 import { consultationSchema, fieldErrors, formObject, messageSchema } from "@/lib/validation";
@@ -14,6 +16,17 @@ import type { Consultation, FormState, Message } from "@/lib/types";
 /** Bots fill every field; people never see this one. */
 function isBot(formData: FormData) {
   return Boolean(formData.get("website"));
+}
+
+/** The ad/campaign that brought this visitor, if any (see AttributionCapture). */
+async function attribution() {
+  const raw = (await cookies()).get(ATTRIBUTION_COOKIE)?.value;
+  if (!raw) return {};
+  try {
+    return cleanAttribution(JSON.parse(raw));
+  } catch {
+    return {};
+  }
 }
 
 function langOf(formData: FormData): Lang {
@@ -50,6 +63,7 @@ export async function bookConsultation(_prev: FormState, formData: FormData): Pr
     id: randomUUID(),
     ...parsed.data,
     lang,
+    utm: await attribution(),
     status: service && booking.auto_confirm ? ("confirmed" as const) : ("pending" as const),
   };
   const { error } = await db.from("consultations").insert(row);
@@ -83,7 +97,7 @@ export async function sendMessage(_prev: FormState, formData: FormData): Promise
   const supabase = createPublicClient();
   if (!supabase) return { ok: false, message: f.msg.contactOffline, values };
 
-  const row = { id: randomUUID(), ...parsed.data, lang };
+  const row = { id: randomUUID(), ...parsed.data, lang, utm: await attribution() };
   const { error } = await supabase.from("messages").insert(row);
   if (error) {
     console.error("sendMessage", error.message);

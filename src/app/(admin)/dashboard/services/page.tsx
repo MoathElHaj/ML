@@ -1,30 +1,33 @@
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
-import { getAdmin } from "@/lib/supabase/server";
+import { requireSection } from "@/lib/supabase/server";
+import { getDashT } from "@/lib/dash";
 import { deleteService, toggleService } from "@/actions/admin";
 import type { Service } from "@/lib/types";
 import { ConfirmButton } from "@/components/dashboard/ConfirmButton";
 import { EmptyRow, PageHeader, Panel, PublishedBadge, SavedNotice } from "@/components/dashboard/ui";
 import { ServiceIcon } from "@/components/icons";
 
-export const metadata = { title: "الخدمات" };
+export async function generateMetadata() {
+  const { t } = await getDashT();
+  return { title: t("الخدمات", "Services") };
+}
 
 export default async function ServicesAdmin(props: PageProps<"/dashboard/services">) {
-  const admin = await getAdmin();
-  if (!admin) redirect("/login");
+  const admin = await requireSection("content");
+  const { t } = await getDashT();
   const { saved } = await props.searchParams;
   const { data } = await admin.supabase.from("services").select("*").order("sort_order").order("created_at");
   const services = (data ?? []) as Service[];
 
   return (
     <>
-      <PageHeader title="الخدمات" description="الخدمات التي تظهر في الموقع، بالترتيب نفسه." action={{ href: "/dashboard/services/new", label: "خدمة جديدة" }} />
+      <PageHeader title={t("الخدمات", "Services")} description={t("الخدمات التي تظهر في الموقع، بالترتيب نفسه.", "Services shown on the website, in this order.")} action={{ href: "/dashboard/services/new", label: t("خدمة جديدة", "New service") }} />
       <SavedNotice show={saved === "1"} />
       <Panel>
         {services.length === 0 ? (
-          <EmptyRow>لا توجد خدمات. أضف أول خدمة، أو شغّل ملف seed.sql لإضافة الخدمات الأربع.</EmptyRow>
+          <EmptyRow>{t("لا توجد خدمات. أضف أول خدمة، أو شغّل ملف seed.sql لإضافة الخدمات الأربع.", "No services yet. Add one, or run seed.sql to add the four default services.")}</EmptyRow>
         ) : (
           <ul className="divide-y divide-line">
             {services.map((s) => (
@@ -40,7 +43,7 @@ export default async function ServicesAdmin(props: PageProps<"/dashboard/service
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="font-bold text-night">{s.title}</p>
-                      <PublishedBadge published={s.is_published} draftLabel="مخفية" />
+                      <PublishedBadge published={s.is_published} draftLabel={t("مخفية", "Hidden")} />
                     </div>
                     <p className="truncate text-sm text-muted">{s.summary}</p>
                     <p className="text-xs text-muted" dir="ltr">
@@ -52,18 +55,18 @@ export default async function ServicesAdmin(props: PageProps<"/dashboard/service
                   <form action={toggleService}>
                     <input type="hidden" name="id" value={s.id} />
                     <input type="hidden" name="value" value={String(!s.is_published)} />
-                    <button type="submit" className="btn btn-outline btn-sm" aria-label={s.is_published ? `إخفاء ${s.title}` : `إظهار ${s.title}`}>
+                    <button type="submit" className="btn btn-outline btn-sm" aria-label={s.is_published ? t(`إخفاء ${s.title}`, `Hide ${s.title}`) : t(`إظهار ${s.title}`, `Show ${s.title}`)}>
                       {s.is_published ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-                      {s.is_published ? "إخفاء" : "إظهار"}
+                      {s.is_published ? t("إخفاء", "Hide") : t("إظهار", "Show")}
                     </button>
                   </form>
                   <Link href={`/dashboard/services/${s.id}`} className="btn btn-outline btn-sm">
                     <Pencil className="size-4" aria-hidden />
-                    تعديل
+                    {t("تعديل", "Edit")}
                   </Link>
                   <form action={deleteService}>
                     <input type="hidden" name="id" value={s.id} />
-                    <ConfirmButton className="btn btn-danger btn-sm" aria-label={`حذف ${s.title}`} message={`حذف خدمة «${s.title}»؟ ستبقى الأعمال المرتبطة بها لكن دون خدمة.`}>
+                    <ConfirmButton className="btn btn-danger btn-sm" aria-label={t(`حذف ${s.title}`, `Delete ${s.title}`)} message={t(`حذف خدمة «${s.title}»؟ ستبقى الأعمال المرتبطة بها لكن دون خدمة.`, `Delete “${s.title}”? Linked projects stay, without a service.`)}>
                       <Trash2 className="size-4" aria-hidden />
                     </ConfirmButton>
                   </form>

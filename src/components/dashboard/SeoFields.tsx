@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useT } from "./DashLang";
 
 const TITLE_MAX = 60;
 const DESC_MAX = 160;
@@ -28,6 +29,7 @@ export function SeoFields({
 }) {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
+  const { t } = useT();
   const en = suffix === "_en";
   const shownTitle = title || fallbackTitle || (en ? "Page title" : "عنوان الصفحة");
   const shownDesc = description || fallbackDescription || (en ? "Page description shown in search results." : "وصف الصفحة الذي يظهر في نتائج البحث.");
@@ -38,7 +40,7 @@ export function SeoFields({
       <div>
         <div className="flex items-center justify-between">
           <label htmlFor={`f-meta_title${suffix}`} className="field-label">
-            {en ? "SEO title" : "عنوان SEO"}
+            {t("عنوان SEO", "SEO title")}
           </label>
           {counter(title.length, TITLE_MAX)}
         </div>
@@ -52,12 +54,12 @@ export function SeoFields({
           className="field"
           aria-invalid={errors[`meta_title${suffix}`] ? true : undefined}
         />
-        <p className="field-hint">{en ? "Leave empty to use the main title. Best under 60 characters." : "اتركه فارغاً لاستخدام العنوان الأساسي. الأفضل أقل من 60 حرفاً ويتضمن الكلمة المفتاحية."}</p>
+        <p className="field-hint">{t("اتركه فارغاً لاستخدام العنوان الأساسي. الأفضل أقل من 60 حرفاً ويتضمن الكلمة المفتاحية.", "Leave empty to use the main title. Best under 60 characters, including the keyword.")}</p>
       </div>
       <div>
         <div className="flex items-center justify-between">
           <label htmlFor={`f-meta_description${suffix}`} className="field-label">
-            {en ? "Meta description" : "وصف SEO"}
+            {t("وصف SEO", "Meta description")}
           </label>
           {counter(description.length, DESC_MAX)}
         </div>
@@ -71,10 +73,10 @@ export function SeoFields({
           placeholder={fallbackDescription}
           className="field !min-h-0"
         />
-        <p className="field-hint">{en ? "Summarise the page and invite the click. 120–160 characters." : "ملخص يشجّع على النقر، بين 120 و160 حرفاً."}</p>
+        <p className="field-hint">{t("ملخص يشجّع على النقر، بين 120 و160 حرفاً.", "Summarise the page and invite the click. 120–160 characters.")}</p>
       </div>
-      <div className="rounded-2xl border border-line bg-white p-4" aria-label={en ? "Google preview" : "معاينة Google"}>
-        <p className="text-xs text-muted">{en ? "Google preview" : "معاينة في Google"}</p>
+      <div className="rounded-2xl border border-line bg-white p-4" aria-label={t("معاينة Google", "Google preview")}>
+        <p className="text-xs text-muted">{t("معاينة في Google", "Google preview")}</p>
         <p className="mt-2 truncate text-[13px] text-[#4d5156]" dir="ltr">
           bariq › {path.replace(/^\//, "").replace(/\//g, " › ")}
         </p>

@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Mail, MailOpen, Phone, Trash2 } from "lucide-react";
-import { getAdmin } from "@/lib/supabase/server";
+import { requireSection } from "@/lib/supabase/server";
+import { getDashT } from "@/lib/dash";
 import { deleteMessage, setMessageRead } from "@/actions/admin";
 import type { Message } from "@/lib/types";
 import { cn, formatDate } from "@/lib/utils";
@@ -9,11 +9,14 @@ import { ConfirmButton } from "@/components/dashboard/ConfirmButton";
 import { EmptyRow, Panel } from "@/components/dashboard/ui";
 import { WhatsAppIcon } from "@/components/icons";
 
-export const metadata = { title: "الرسائل" };
+export async function generateMetadata() {
+  const { t } = await getDashT();
+  return { title: t("الرسائل", "Messages") };
+}
 
 export default async function MessagesAdmin(props: PageProps<"/dashboard/messages">) {
-  const admin = await getAdmin();
-  if (!admin) redirect("/login");
+  const admin = await requireSection("messages");
+  const { t, lang } = await getDashT();
   const { filter } = await props.searchParams;
   const unreadOnly = filter === "unread";
   let q = admin.supabase.from("messages").select("*").order("created_at", { ascending: false }).limit(200);
@@ -25,13 +28,13 @@ export default async function MessagesAdmin(props: PageProps<"/dashboard/message
     <>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-[28px] font-bold text-night">الرسائل</h1>
-          <p className="mt-1 text-muted">رسائل نموذج «تواصل معنا».</p>
+          <h1 className="text-[28px] font-bold text-night">{t("الرسائل", "Messages")}</h1>
+          <p className="mt-1 text-muted">{t("رسائل نموذج «تواصل معنا».", "Messages from the contact form.")}</p>
         </div>
-        <nav aria-label="تصفية الرسائل" className="flex gap-2">
+        <nav aria-label={t("تصفية الرسائل", "Filter messages")} className="flex gap-2">
           {[
-            { href: "/dashboard/messages", label: "الكل", active: !unreadOnly },
-            { href: "/dashboard/messages?filter=unread", label: "غير المقروءة", active: unreadOnly },
+            { href: "/dashboard/messages", label: t("الكل", "All"), active: !unreadOnly },
+            { href: "/dashboard/messages?filter=unread", label: t("غير المقروءة", "Unread"), active: unreadOnly },
           ].map((t) => (
             <Link
               key={t.href}
@@ -50,7 +53,7 @@ export default async function MessagesAdmin(props: PageProps<"/dashboard/message
 
       {messages.length === 0 ? (
         <Panel>
-          <EmptyRow>{unreadOnly ? "لا توجد رسائل غير مقروءة." : "لا توجد رسائل بعد."}</EmptyRow>
+          <EmptyRow>{unreadOnly ? t("لا توجد رسائل غير مقروءة.", "No unread messages.") : t("لا توجد رسائل بعد.", "No messages yet.")}</EmptyRow>
         </Panel>
       ) : (
         <div className="space-y-3">
@@ -59,10 +62,10 @@ export default async function MessagesAdmin(props: PageProps<"/dashboard/message
             return (
               <article key={m.id} className={cn("rounded-[20px] border bg-white p-5", m.is_read ? "border-line" : "border-violet/50 shadow-[var(--shadow-soft)]")}>
                 <header className="flex flex-wrap items-center gap-2">
-                  {!m.is_read && <span className="rounded-full bg-violet px-2 py-0.5 text-xs font-semibold text-white">جديدة</span>}
+                  {!m.is_read && <span className="rounded-full bg-violet px-2 py-0.5 text-xs font-semibold text-white">{t("جديدة", "New")}</span>}
                   <h2 className="font-bold text-night">{m.full_name}</h2>
                   <time className="ms-auto text-sm text-muted" dateTime={m.created_at}>
-                    {formatDate(m.created_at)}
+                    {formatDate(m.created_at, lang)}
                   </time>
                 </header>
                 {m.subject && <p className="mt-1 font-semibold text-violet">{m.subject}</p>}
@@ -70,13 +73,13 @@ export default async function MessagesAdmin(props: PageProps<"/dashboard/message
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   {digits && (
                     <a
-                      href={`https://wa.me/${digits}?text=${encodeURIComponent(`مرحباً ${m.full_name}، شكراً لتواصلك مع بريق.`)}`}
+                      href={`https://wa.me/${digits}?text=${encodeURIComponent(m.lang === "en" ? `Hi ${m.full_name}, thanks for contacting Bariq.` : `مرحباً ${m.full_name}، شكراً لتواصلك مع بريق.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn btn-whatsapp btn-sm"
                     >
                       <WhatsAppIcon className="size-4" />
-                      رد عبر واتساب
+                      {t("رد عبر واتساب", "Reply on WhatsApp")}
                     </a>
                   )}
                   {m.phone && (
@@ -86,7 +89,7 @@ export default async function MessagesAdmin(props: PageProps<"/dashboard/message
                     </a>
                   )}
                   {m.email && (
-                    <a href={`mailto:${m.email}?subject=${encodeURIComponent(`رد: ${m.subject ?? "رسالتك إلى بريق"}`)}`} className="btn btn-outline btn-sm">
+                    <a href={`mailto:${m.email}?subject=${encodeURIComponent(m.lang === "en" ? `Re: ${m.subject ?? "Your message to Bariq"}` : `رد: ${m.subject ?? "رسالتك إلى بريق"}`)}`} className="btn btn-outline btn-sm">
                       <Mail className="size-4" aria-hidden />
                       {m.email}
                     </a>
@@ -97,12 +100,12 @@ export default async function MessagesAdmin(props: PageProps<"/dashboard/message
                       <input type="hidden" name="value" value={String(!m.is_read)} />
                       <button type="submit" className="btn btn-outline btn-sm">
                         {m.is_read ? <Mail className="size-4" aria-hidden /> : <MailOpen className="size-4" aria-hidden />}
-                        {m.is_read ? "تعيين كغير مقروءة" : "تعيين كمقروءة"}
+                        {m.is_read ? t("تعيين كغير مقروءة", "Mark as unread") : t("تعيين كمقروءة", "Mark as read")}
                       </button>
                     </form>
                     <form action={deleteMessage}>
                       <input type="hidden" name="id" value={m.id} />
-                      <ConfirmButton className="btn btn-danger btn-sm" aria-label={`حذف رسالة ${m.full_name}`} message="حذف هذه الرسالة نهائياً؟">
+                      <ConfirmButton className="btn btn-danger btn-sm" aria-label={t(`حذف رسالة ${m.full_name}`, `Delete message from ${m.full_name}`)} message={t("حذف هذه الرسالة نهائياً؟", "Delete this message permanently?")}>
                         <Trash2 className="size-4" aria-hidden />
                       </ConfirmButton>
                     </form>

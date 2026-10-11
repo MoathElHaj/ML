@@ -7,6 +7,7 @@ import { isMetaConfigured, oauthUrl } from "@/lib/meta";
 export async function GET(request: NextRequest) {
   const admin = await getAdmin();
   if (!admin) return NextResponse.redirect(new URL("/login", request.url));
+  if (!admin.can("marketing")) return NextResponse.redirect(new URL("/dashboard?denied=marketing", request.url));
   if (!isMetaConfigured) return NextResponse.redirect(new URL("/dashboard/marketing?meta=not_configured", request.url));
 
   const state = randomBytes(24).toString("hex");

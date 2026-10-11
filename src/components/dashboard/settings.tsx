@@ -1,48 +1,40 @@
 "use client";
 
-import { useActionState } from "react";
-import { Save, Send } from "lucide-react";
-import { addBlockedDate, saveBookingSettings, saveEmailSettings, saveTrackingSettings, sendTestEmail } from "@/actions/settings";
+import { useActionState, useState } from "react";
+import { Check, Copy, Send } from "lucide-react";
+import {
+  addBlockedDate,
+  saveBookingSettings,
+  saveCrmSettings,
+  saveEmailSettings,
+  saveTrackingSettings,
+  saveWhatsAppSettings,
+  sendTestEmail,
+} from "@/actions/settings";
 import type { FormState } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { FormAlert, TextField } from "@/components/forms/Field";
+import { TextField } from "@/components/forms/Field";
+import { Card, ChipCheckbox, SaveBar, Toggle } from "./kit";
+import { useT } from "./DashLang";
 
 const initial: FormState = { ok: false };
 
-const DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const DAYS = [
+  { ar: "الأحد", en: "Sun" },
+  { ar: "الإثنين", en: "Mon" },
+  { ar: "الثلاثاء", en: "Tue" },
+  { ar: "الأربعاء", en: "Wed" },
+  { ar: "الخميس", en: "Thu" },
+  { ar: "الجمعة", en: "Fri" },
+  { ar: "السبت", en: "Sat" },
+];
 
-function Card({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+function InlineStatus({ state }: { state: FormState }) {
+  if (!state.message) return null;
   return (
-    <section className="rounded-[20px] border border-line bg-white p-5 sm:p-6">
-      <h2 className="font-bold text-night">{title}</h2>
-      {description && <p className="mt-1 text-sm text-muted">{description}</p>}
-      <div className="mt-5 space-y-5">{children}</div>
-    </section>
-  );
-}
-
-function Toggle({ name, label, hint, defaultChecked }: { name: string; label: string; hint?: string; defaultChecked?: boolean }) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-white p-4">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="peer sr-only" />
-      <span className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-[#cfc4e3] transition-colors peer-checked:bg-violet peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-violet after:absolute after:top-0.5 after:start-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:-translate-x-5" />
-      <span>
-        <span className="block font-semibold text-night">{label}</span>
-        {hint && <span className="block text-sm text-muted">{hint}</span>}
-      </span>
-    </label>
-  );
-}
-
-function SaveBar({ pending, state }: { pending: boolean; state: FormState }) {
-  return (
-    <div className="flex flex-wrap items-center gap-3">
-      <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
-        <Save className="size-4" aria-hidden />
-        {pending ? "جارٍ الحفظ…" : "حفظ"}
-      </button>
-      <FormAlert ok={state.ok} message={state.message} />
-    </div>
+    <p role="status" className={cn("w-full text-sm", state.ok ? "text-emerald-800" : "text-red-800")}>
+      {state.message}
+    </p>
   );
 }
 
@@ -58,43 +50,49 @@ export type BookingValues = {
 };
 
 export function BookingSettingsForm({ value }: { value: BookingValues }) {
+  const { t, lang } = useT();
   const [state, action, pending] = useActionState(saveBookingSettings, initial);
   const e = state.errors ?? {};
   const v = state.values;
   return (
     <form action={action} className="space-y-6">
-      <Card title="أيام وأوقات العمل" description="تظهر هذه الأيام والأوقات للعملاء في صفحة «احجز استشارة».">
+      <Card title={t("أيام وأوقات العمل", "Working days & hours")} description={t("تظهر هذه الأيام والأوقات للعملاء في صفحة «احجز استشارة».", "Clients see these days and times on the “Book a consultation” page.")}>
         <fieldset>
-          <legend className="field-label">أيام العمل</legend>
+          <legend className="field-label">{t("أيام العمل", "Working days")}</legend>
           <div className="flex flex-wrap gap-2">
-            {DAYS.map((label, i) => (
-              <label key={i} className="cursor-pointer">
-                <input type="checkbox" name="working_days" value={i} defaultChecked={value.working_days.includes(i)} className="peer sr-only" />
-                <span className="inline-flex min-h-10 items-center rounded-full border-[1.5px] border-line px-4 text-sm font-semibold text-night transition-colors peer-checked:border-violet peer-checked:bg-violet peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-violet">
-                  {label}
-                </span>
-              </label>
+            {DAYS.map((d, i) => (
+              <ChipCheckbox key={i} name="working_days" value={String(i)} label={d[lang]} defaultChecked={value.working_days.includes(i)} />
             ))}
           </div>
           {e.working_days && <p className="field-error">{e.working_days}</p>}
         </fieldset>
         <TextField
-          label="أوقات المواعيد"
+          label={t("أوقات المواعيد", "Time slots")}
           name="slots"
           dir="ltr"
           defaultValue={v?.slots ?? value.slots.join(", ")}
           error={e.slots}
-          hint="بصيغة 24 ساعة مفصولة بفاصلة، مثل: 10:00, 11:00, 16:30"
+          hint={t("بصيغة 24 ساعة مفصولة بفاصلة، مثل: 10:00, 11:00, 16:30", "24-hour format, comma separated, e.g. 10:00, 11:00, 16:30")}
         />
         <div className="grid gap-5 sm:grid-cols-3">
-          <TextField label="مدة الجلسة (دقيقة)" name="duration_minutes" type="number" min={10} max={240} dir="ltr" defaultValue={v?.duration_minutes ?? String(value.duration_minutes)} error={e.duration_minutes} />
-          <TextField label="الحجز متاح لمدة (يوم)" name="days_ahead" type="number" min={1} max={120} dir="ltr" defaultValue={v?.days_ahead ?? String(value.days_ahead)} error={e.days_ahead} />
-          <TextField label="المنطقة الزمنية" name="time_zone" dir="ltr" defaultValue={v?.time_zone ?? value.time_zone} error={e.time_zone} hint="مثل Asia/Muscat" />
+          <TextField label={t("مدة الجلسة (دقيقة)", "Session length (min)")} name="duration_minutes" type="number" min={10} max={240} dir="ltr" defaultValue={v?.duration_minutes ?? String(value.duration_minutes)} error={e.duration_minutes} />
+          <TextField label={t("الحجز متاح لمدة (يوم)", "Bookable days ahead")} name="days_ahead" type="number" min={1} max={120} dir="ltr" defaultValue={v?.days_ahead ?? String(value.days_ahead)} error={e.days_ahead} />
+          <TextField label={t("المنطقة الزمنية", "Time zone")} name="time_zone" dir="ltr" defaultValue={v?.time_zone ?? value.time_zone} error={e.time_zone} hint={t("مثل Asia/Muscat", "e.g. Asia/Muscat")} />
         </div>
       </Card>
-      <Card title="الأتمتة">
-        <Toggle name="auto_confirm" label="تأكيد الحجوزات تلقائياً" hint="يُؤكَّد الموعد فور حجزه ويصل العميل بريد التأكيد مع ملف التقويم. عند الإيقاف تؤكده أنت من جدول الاستشارات." defaultChecked={v ? v.auto_confirm === "on" : value.auto_confirm} />
-        <Toggle name="reminders" label="تذكير العميل قبل الموعد بيوم" hint="يُرسل بريد تذكير تلقائي يومياً للمواعيد المؤكدة في اليوم التالي (يتطلب إعداد البريد)." defaultChecked={v ? v.reminders === "on" : value.reminders} />
+      <Card title={t("الأتمتة", "Automation")}>
+        <Toggle
+          name="auto_confirm"
+          label={t("تأكيد الحجوزات تلقائياً", "Auto-confirm bookings")}
+          hint={t("يُؤكَّد الموعد فور حجزه ويصل العميل بريد التأكيد مع ملف التقويم. عند الإيقاف تؤكده أنت من جدول الاستشارات.", "Bookings are confirmed instantly and the client gets the confirmation email with a calendar file. When off, you confirm them from the schedule.")}
+          defaultChecked={v ? v.auto_confirm === "on" : value.auto_confirm}
+        />
+        <Toggle
+          name="reminders"
+          label={t("تذكير العميل قبل الموعد بيوم", "Remind the client a day before")}
+          hint={t("يُرسل بريد تذكير تلقائي يومياً للمواعيد المؤكدة في اليوم التالي (يتطلب إعداد البريد).", "A reminder email goes out daily for the next day's confirmed bookings (needs email set up).")}
+          defaultChecked={v ? v.reminders === "on" : value.reminders}
+        />
       </Card>
       <SaveBar pending={pending} state={state} />
     </form>
@@ -102,29 +100,26 @@ export function BookingSettingsForm({ value }: { value: BookingValues }) {
 }
 
 export function BlockedDateForm() {
+  const { t } = useT();
   const [state, action, pending] = useActionState(addBlockedDate, initial);
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <div>
         <label htmlFor="blocked-day" className="field-label">
-          التاريخ
+          {t("التاريخ", "Date")}
         </label>
         <input id="blocked-day" type="date" name="day" required dir="ltr" className="field !w-auto" />
       </div>
       <div className="min-w-48 flex-1">
         <label htmlFor="blocked-reason" className="field-label">
-          السبب (اختياري)
+          {t("السبب (اختياري)", "Reason (optional)")}
         </label>
-        <input id="blocked-reason" name="reason" maxLength={120} className="field" placeholder="مثل: إجازة العيد" />
+        <input id="blocked-reason" name="reason" maxLength={120} className="field" placeholder={t("مثل: إجازة العيد", "e.g. Eid holiday")} />
       </div>
       <button type="submit" className="btn btn-outline btn-sm" disabled={pending}>
-        إضافة يوم إجازة
+        {t("إضافة يوم إجازة", "Add day off")}
       </button>
-      {state.message && (
-        <p role="status" className={cn("w-full text-sm", state.ok ? "text-emerald-800" : "text-red-800")}>
-          {state.message}
-        </p>
-      )}
+      <InlineStatus state={state} />
     </form>
   );
 }
@@ -146,52 +141,61 @@ export type EmailValues = {
 };
 
 export function EmailSettingsForm({ value }: { value: EmailValues }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(saveEmailSettings, initial);
   const e = state.errors ?? {};
   const v = state.values;
   return (
     <form action={action} className="space-y-6" autoComplete="off">
-      <Card title="من يستلم الإشعارات؟">
+      <Card title={t("من يستلم الإشعارات؟", "Who gets notified?")}>
         <TextField
-          label="بريد فريق بريق"
+          label={t("بريد فريق بريق", "Team email")}
           name="notify_to"
           dir="ltr"
           defaultValue={v?.notify_to ?? value.notify_to.join(", ")}
           error={e.notify_to}
-          hint="يصل إليه إشعار بكل حجز ورسالة جديدة. يمكنك إدخال أكثر من بريد مفصول بفاصلة."
+          hint={t("يصل إليه إشعار بكل حجز ورسالة جديدة. يمكنك إدخال أكثر من بريد مفصول بفاصلة.", "Gets a notification for every new booking and message. Separate several emails with commas.")}
         />
         <div className="grid gap-3 lg:grid-cols-3">
-          <Toggle name="notify_bookings" label="إشعار بالحجوزات الجديدة" defaultChecked={v ? v.notify_bookings === "on" : value.notify_bookings} />
-          <Toggle name="notify_messages" label="إشعار برسائل «تواصل معنا»" defaultChecked={v ? v.notify_messages === "on" : value.notify_messages} />
-          <Toggle name="client_confirmations" label="رسائل للعميل" hint="استلام الطلب، التأكيد مع ملف التقويم، والتذكير" defaultChecked={v ? v.client_confirmations === "on" : value.client_confirmations} />
+          <Toggle name="notify_bookings" label={t("إشعار بالحجوزات الجديدة", "New booking alerts")} defaultChecked={v ? v.notify_bookings === "on" : value.notify_bookings} />
+          <Toggle name="notify_messages" label={t("إشعار برسائل «تواصل معنا»", "Contact form alerts")} defaultChecked={v ? v.notify_messages === "on" : value.notify_messages} />
+          <Toggle
+            name="client_confirmations"
+            label={t("رسائل للعميل", "Client emails")}
+            hint={t("استلام الطلب، التأكيد مع ملف التقويم، والتذكير", "Receipt, confirmation with calendar file, and reminder")}
+            defaultChecked={v ? v.client_confirmations === "on" : value.client_confirmations}
+          />
         </div>
       </Card>
 
       <Card
-        title="خادم الإرسال (SMTP)"
-        description="بيانات بريد الإرسال من مزوّد بريدك: Google Workspace أو Zoho أو Outlook أو بريد الاستضافة. في Gmail استخدم «كلمة مرور التطبيقات» وليس كلمة المرور العادية."
+        title={t("خادم الإرسال (SMTP)", "Outgoing server (SMTP)")}
+        description={t(
+          "بيانات بريد الإرسال من مزوّد بريدك: Google Workspace أو Zoho أو Outlook أو بريد الاستضافة. في Gmail استخدم «كلمة مرور التطبيقات» وليس كلمة المرور العادية.",
+          "Sending details from your email provider: Google Workspace, Zoho, Outlook or your host. With Gmail use an App Password, not your normal password.",
+        )}
       >
-        <Toggle name="enabled" label="تفعيل إرسال البريد" defaultChecked={v ? v.enabled === "on" : value.enabled} />
+        <Toggle name="enabled" label={t("تفعيل إرسال البريد", "Enable email sending")} defaultChecked={v ? v.enabled === "on" : value.enabled} />
         <div className="grid gap-5 sm:grid-cols-[1fr_120px]">
-          <TextField label="الخادم (Host)" name="host" dir="ltr" defaultValue={v?.host ?? value.host} error={e.host} placeholder="smtp.gmail.com" />
-          <TextField label="المنفذ (Port)" name="port" type="number" dir="ltr" defaultValue={v?.port ?? String(value.port)} error={e.port} hint="587 أو 465" />
+          <TextField label={t("الخادم (Host)", "Host")} name="host" dir="ltr" defaultValue={v?.host ?? value.host} error={e.host} placeholder="smtp.gmail.com" />
+          <TextField label={t("المنفذ (Port)", "Port")} name="port" type="number" dir="ltr" defaultValue={v?.port ?? String(value.port)} error={e.port} hint={t("587 أو 465", "587 or 465")} />
         </div>
-        <Toggle name="secure" label="اتصال آمن مباشر (SSL)" hint="فعّله مع المنفذ 465، وأوقفه مع 587." defaultChecked={v ? v.secure === "on" : value.secure} />
+        <Toggle name="secure" label={t("اتصال آمن مباشر (SSL)", "Direct secure connection (SSL)")} hint={t("فعّله مع المنفذ 465، وأوقفه مع 587.", "On for port 465, off for 587.")} defaultChecked={v ? v.secure === "on" : value.secure} />
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField label="اسم المستخدم" name="user" dir="ltr" autoComplete="off" defaultValue={v?.user ?? value.user} error={e.user} placeholder="you@bariq.om" />
+          <TextField label={t("اسم المستخدم", "Username")} name="user" dir="ltr" autoComplete="off" defaultValue={v?.user ?? value.user} error={e.user} placeholder="you@bariq.om" />
           <TextField
-            label="كلمة المرور"
+            label={t("كلمة المرور", "Password")}
             name="password"
             type="password"
             dir="ltr"
             autoComplete="new-password"
             error={e.password}
-            placeholder={value.has_password ? "••••••••  (محفوظة — اتركها فارغة للإبقاء عليها)" : ""}
+            placeholder={value.has_password ? t("••••••••  (محفوظة — اتركها فارغة للإبقاء عليها)", "••••••••  (saved — leave empty to keep it)") : ""}
           />
         </div>
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField label="اسم المرسل" name="from_name" defaultValue={v?.from_name ?? value.from_name} error={e.from_name} />
-          <TextField label="بريد المرسل" name="from_email" dir="ltr" defaultValue={v?.from_email ?? value.from_email} error={e.from_email} placeholder="hello@bariq.om" />
+          <TextField label={t("اسم المرسل", "Sender name")} name="from_name" defaultValue={v?.from_name ?? value.from_name} error={e.from_name} />
+          <TextField label={t("بريد المرسل", "Sender email")} name="from_email" dir="ltr" defaultValue={v?.from_email ?? value.from_email} error={e.from_email} placeholder="hello@bariq.om" />
         </div>
       </Card>
       <SaveBar pending={pending} state={state} />
@@ -200,24 +204,21 @@ export function EmailSettingsForm({ value }: { value: EmailValues }) {
 }
 
 export function TestEmailForm({ defaultTo }: { defaultTo: string }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(sendTestEmail, initial);
   return (
     <form action={action} className="flex flex-wrap items-end gap-3">
       <div className="min-w-56 flex-1">
         <label htmlFor="test-to" className="field-label">
-          إرسال رسالة تجريبية إلى
+          {t("إرسال رسالة تجريبية إلى", "Send a test message to")}
         </label>
         <input id="test-to" name="to" type="email" dir="ltr" defaultValue={defaultTo} className="field" />
       </div>
       <button type="submit" className="btn btn-outline btn-sm" disabled={pending}>
         <Send className="size-4 rtl:-scale-x-100" aria-hidden />
-        {pending ? "جارٍ الإرسال…" : "إرسال تجربة"}
+        {pending ? t("جارٍ الإرسال…", "Sending…") : t("إرسال تجربة", "Send test")}
       </button>
-      {state.message && (
-        <p role="status" className={cn("w-full text-sm", state.ok ? "text-emerald-800" : "text-red-800")}>
-          {state.message}
-        </p>
-      )}
+      <InlineStatus state={state} />
     </form>
   );
 }
@@ -226,6 +227,7 @@ export function TestEmailForm({ defaultTo }: { defaultTo: string }) {
 export type TrackingValues = { gtm_id: string; ga4_id: string; google_ads_id: string; google_ads_lead_label: string; meta_pixel_id: string };
 
 export function TrackingSettingsForm({ value }: { value: TrackingValues }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(saveTrackingSettings, initial);
   const e = state.errors ?? {};
   const v = state.values;
@@ -233,30 +235,130 @@ export function TrackingSettingsForm({ value }: { value: TrackingValues }) {
     <form action={action} className="space-y-6">
       <Card
         title="Google"
-        description="إن استخدمت Google Tag Manager فأضف GA4 وGoogle Ads من داخل GTM واترك حقليهما هنا فارغين لتجنب تكرار القياس."
+        description={t(
+          "إن استخدمت Google Tag Manager فأضف GA4 وGoogle Ads من داخل GTM واترك حقليهما هنا فارغين لتجنب تكرار القياس.",
+          "If you use Google Tag Manager, add GA4 and Google Ads inside GTM and leave those two fields empty here to avoid double counting.",
+        )}
       >
-        <TextField label="Google Tag Manager — معرّف الحاوية" name="gtm_id" dir="ltr" defaultValue={v?.gtm_id ?? value.gtm_id} error={e.gtm_id} placeholder="GTM-XXXXXXX" />
+        <TextField label={t("Google Tag Manager — معرّف الحاوية", "Google Tag Manager — container ID")} name="gtm_id" dir="ltr" defaultValue={v?.gtm_id ?? value.gtm_id} error={e.gtm_id} placeholder="GTM-XXXXXXX" />
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField label="Google Analytics 4 — معرّف القياس" name="ga4_id" dir="ltr" defaultValue={v?.ga4_id ?? value.ga4_id} error={e.ga4_id} placeholder="G-XXXXXXXXXX" />
-          <TextField label="Google Ads — معرّف الحساب" name="google_ads_id" dir="ltr" defaultValue={v?.google_ads_id ?? value.google_ads_id} error={e.google_ads_id} placeholder="AW-XXXXXXXXX" />
+          <TextField label={t("Google Analytics 4 — معرّف القياس", "Google Analytics 4 — measurement ID")} name="ga4_id" dir="ltr" defaultValue={v?.ga4_id ?? value.ga4_id} error={e.ga4_id} placeholder="G-XXXXXXXXXX" />
+          <TextField label={t("Google Ads — معرّف الحساب", "Google Ads — account ID")} name="google_ads_id" dir="ltr" defaultValue={v?.google_ads_id ?? value.google_ads_id} error={e.google_ads_id} placeholder="AW-XXXXXXXXX" />
         </div>
         <TextField
-          label="Google Ads — تسمية تحويل «عميل محتمل»"
+          label={t("Google Ads — تسمية تحويل «عميل محتمل»", "Google Ads — lead conversion label")}
           name="google_ads_lead_label"
           dir="ltr"
           defaultValue={v?.google_ads_lead_label ?? value.google_ads_lead_label}
           error={e.google_ads_lead_label}
-          hint="من Google Ads ← الأهداف ← التحويلات. يُسجَّل التحويل تلقائياً عند كل حجز أو رسالة ناجحة."
+          hint={t("من Google Ads ← الأهداف ← التحويلات. يُسجَّل التحويل تلقائياً عند كل حجز أو رسالة ناجحة.", "From Google Ads → Goals → Conversions. Recorded automatically on every successful booking or message.")}
         />
       </Card>
-      <Card title="Meta (فيسبوك وإنستغرام)">
+      <Card title={t("Meta (فيسبوك وإنستغرام)", "Meta (Facebook & Instagram)")}>
         <TextField
-          label="Meta Pixel — المعرّف"
+          label={t("Meta Pixel — المعرّف", "Meta Pixel — ID")}
           name="meta_pixel_id"
           dir="ltr"
           defaultValue={v?.meta_pixel_id ?? value.meta_pixel_id}
           error={e.meta_pixel_id}
-          hint="من Events Manager. يُسجَّل حدث Lead عند كل حجز أو رسالة، لتحسين حملاتك الإعلانية."
+          hint={t("من Events Manager. يُسجَّل حدث Lead عند كل حجز أو رسالة، لتحسين حملاتك الإعلانية.", "From Events Manager. A Lead event fires on every booking or message to optimise your ads.")}
+        />
+      </Card>
+      <SaveBar pending={pending} state={state} />
+    </form>
+  );
+}
+
+// ---------------------------------------------------------------------------
+export type WhatsAppValues = {
+  phone_number_id: string;
+  business_account_id: string;
+  has_token: boolean;
+  has_secret: boolean;
+  verify_token: string;
+  webhook_url: string;
+};
+
+function CopyField({ label, value }: { label: string; value: string }) {
+  const { t } = useT();
+  const [copied, setCopied] = useState(false);
+  return (
+    <div>
+      <p className="field-label">{label}</p>
+      <div className="flex gap-2">
+        <code dir="ltr" className="field flex min-w-0 flex-1 items-center overflow-x-auto whitespace-nowrap bg-[#f8f6fc] text-sm">
+          {value}
+        </code>
+        <button
+          type="button"
+          onClick={() => navigator.clipboard.writeText(value).then(() => (setCopied(true), setTimeout(() => setCopied(false), 1500)))}
+          className="btn btn-outline btn-sm shrink-0"
+        >
+          {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+          {copied ? t("تم النسخ", "Copied") : t("نسخ", "Copy")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function WhatsAppSettingsForm({ value }: { value: WhatsAppValues }) {
+  const { t } = useT();
+  const [state, action, pending] = useActionState(saveWhatsAppSettings, initial);
+  const e = state.errors ?? {};
+  return (
+    <form action={action} className="space-y-6" autoComplete="off">
+      <Card
+        title={t("WhatsApp Cloud API", "WhatsApp Cloud API")}
+        description={t(
+          "عند الربط، كل رسالة تصل إلى رقم واتساب الشركة — ومنها رسائل إعلانات «انقر للمراسلة» — تُضاف تلقائياً إلى «العملاء» مع اسم الإعلان، ويمكنك الرد من لوحة التحكم.",
+          "Once connected, every message to the business WhatsApp number — including click-to-WhatsApp ads — becomes a client with the ad that started it, and you can reply from the dashboard.",
+        )}
+      >
+        <ol className="list-decimal space-y-1 ps-5 text-sm leading-7 text-muted">
+          <li>{t("في developers.facebook.com افتح تطبيقك وأضف منتج WhatsApp، واربط رقم الشركة.", "In developers.facebook.com open your app, add the WhatsApp product and connect the business number.")}</li>
+          <li>{t("انسخ Phone number ID و WhatsApp Business Account ID، وأنشئ رمز وصول دائم من System User في Business Manager.", "Copy the Phone number ID and WhatsApp Business Account ID, and create a permanent access token from a System User in Business Manager.")}</li>
+          <li>{t("في إعداد Webhook ضع الرابط ورمز التحقق أدناه، واشترك في حقل messages.", "In the Webhook setup paste the URL and verify token below, and subscribe to the messages field.")}</li>
+        </ol>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField label="Phone number ID" name="phone_number_id" dir="ltr" defaultValue={value.phone_number_id} />
+          <TextField label="WhatsApp Business Account ID" name="business_account_id" dir="ltr" defaultValue={value.business_account_id} />
+          <TextField
+            label={t("رمز الوصول (Access token)", "Access token")}
+            name="access_token"
+            type="password"
+            dir="ltr"
+            autoComplete="new-password"
+            placeholder={value.has_token ? t("•••••• محفوظ — اتركه فارغاً للإبقاء عليه", "•••••• saved — leave empty to keep it") : ""}
+          />
+          <TextField
+            label={t("App secret (للتحقق من التوقيع)", "App secret (signature check)")}
+            name="app_secret"
+            type="password"
+            dir="ltr"
+            autoComplete="new-password"
+            placeholder={value.has_secret ? t("•••••• محفوظ", "•••••• saved") : t("يُستخدم META_APP_SECRET إن تُرك فارغاً", "Falls back to META_APP_SECRET")}
+          />
+        </div>
+        <CopyField label={t("رابط Webhook", "Webhook URL")} value={value.webhook_url} />
+        <TextField label={t("رمز التحقق (Verify token)", "Verify token")} name="verify_token" dir="ltr" defaultValue={value.verify_token} error={e.verify_token} hint={t("انسخه كما هو إلى إعداد Webhook في Meta.", "Paste it as-is into the Meta webhook setup.")} />
+      </Card>
+      <SaveBar pending={pending} state={state} />
+    </form>
+  );
+}
+
+export function CrmSettingsForm({ autoFollowup }: { autoFollowup: boolean }) {
+  const { t } = useT();
+  const [state, action, pending] = useActionState(saveCrmSettings, initial);
+  return (
+    <form action={action} className="space-y-4">
+      <Card title={t("أتمتة العملاء", "Client automation")}>
+        <Toggle
+          name="auto_followup"
+          label={t("إنشاء مهمة متابعة لكل عميل جديد", "Create a follow-up task for every new client")}
+          hint={t("مهمة «تواصل مع …» بأولوية مهمة في نفس اليوم، تظهر في «المهام».", "A high-priority “Contact …” task due the same day, shown in Tasks.")}
+          defaultChecked={autoFollowup}
         />
       </Card>
       <SaveBar pending={pending} state={state} />

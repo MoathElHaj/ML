@@ -3,21 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getAdmin } from "@/lib/supabase/server";
+import { requireSection, type Admin } from "@/lib/supabase/server";
 import { AiError, generateAdPlan, normalizePlan, type AdPlan } from "@/lib/ai";
 import { createClickToWhatsAppCampaign, listAdAccounts, listPages, MetaError, resolveInterests } from "@/lib/meta";
 import { site } from "@/lib/site";
 import { defaultServices } from "@/lib/content";
 import { fieldErrors, formObject } from "@/lib/validation";
+import { getDashT } from "@/lib/dash";
+import type { T } from "@/lib/dash-i18n";
 import type { FormState } from "@/lib/types";
 
-type Admin = NonNullable<Awaited<ReturnType<typeof getAdmin>>>;
-
-async function requireAdmin(): Promise<Admin> {
-  const admin = await getAdmin();
-  if (!admin) redirect("/login");
-  return admin;
-}
 
 export type MetaConnection = {
   access_token: string;
@@ -40,22 +35,23 @@ async function connection(admin: Admin) {
 // Connection
 // ---------------------------------------------------------------------------
 export async function saveMetaAssets(_prev: FormState, formData: FormData): Promise<FormState> {
-  const admin = await requireAdmin();
+  const admin = await requireSection("marketing");
+  const { t } = await getDashT();
   const conn = await connection(admin);
-  if (!conn) return { ok: false, message: "اربط حساب Meta أولاً." };
+  if (!conn) return { ok: false, message: t("اربط حساب Meta أولاً.", "Connect Meta first.") };
 
   const adAccountId = String(formData.get("ad_account_id") ?? "");
   const pageId = String(formData.get("page_id") ?? "");
   const whatsapp = String(formData.get("whatsapp_number") ?? "").replace(/\D/g, "");
-  if (!adAccountId || !pageId) return { ok: false, message: "اختر الحساب الإعلاني والصفحة." };
-  if (whatsapp && whatsapp.length < 8) return { ok: false, message: "رقم واتساب غير صحيح.", errors: { whatsapp_number: "أدخل الرقم بالصيغة الدولية" } };
+  if (!adAccountId || !pageId) return { ok: false, message: t("اختر الحساب الإعلاني والصفحة.", "Pick the ad account and the Page.") };
+  if (whatsapp && whatsapp.length < 8) return { ok: false, message: t("رقم واتساب غير صحيح.", "Invalid WhatsApp number."), errors: { whatsapp_number: t("أدخل الرقم بالصيغة الدولية", "Use the international format") } };
 
   try {
     // Re-read from Meta so we only store assets this token can really use.
     const [accounts, pages] = await Promise.all([listAdAccounts(conn.access_token), listPages(conn.access_token)]);
     const account = accounts.find((a) => a.id === adAccountId);
     const page = pages.find((p) => p.id === pageId);
-    if (!account || !page) return { ok: false, message: "الحساب أو الصفحة غير متاحين لهذا المستخدم في Meta." };
+    if (!account || !page) return { ok: false, message: t("الحساب أو الصفحة غير متاحين لهذا المستخدم في Meta.", "This Meta user has no access to that account or Page.") };
 
     const { error } = await admin.supabase
       .from("meta_connection")
@@ -68,16 +64,16 @@ export async function saveMetaAssets(_prev: FormState, formData: FormData): Prom
         whatsapp_number: whatsapp || null,
       })
       .eq("id", 1);
-    if (error) return { ok: false, message: `تعذّر الحفظ: ${error.message}` };
+    if (error) return { ok: false, message: t("تعذّر الحفظ: ", "Could not save: ") + error.message };
   } catch (e) {
-    return { ok: false, message: e instanceof MetaError ? `Meta: ${e.message}` : "تعذّر الاتصال بـ Meta." };
+    return { ok: false, message: e instanceof MetaError ? `Meta: ${e.message}` : t("تعذّر الاتصال بـ Meta.", "Could not reach Meta.") };
   }
   revalidatePath("/dashboard/marketing");
-  return { ok: true, message: "تم حفظ إعدادات الربط." };
+  return { ok: true, message: t("تم حفظ إعدادات الربط.", "Connection settings saved.") };
 }
 
 export async function disconnectMeta() {
-  const admin = await requireAdmin();
+  const admin = await requireSection("marketing");
   await admin.supabase.from("meta_connection").delete().eq("id", 1);
   revalidatePath("/dashboard/marketing");
 }
@@ -85,9 +81,10 @@ export async function disconnectMeta() {
 // ---------------------------------------------------------------------------
 // AI campaign drafts
 // ---------------------------------------------------------------------------
-const briefSchema = z.object({
-  service_slug: z.string().min(1, "اختر الخدمة"),
-  goal: z.string().trim().min(5, "صف هدف الحملة").max(500),
+const briefSchema = (t: T) =>
+  z.object({
+  service_slug: z.string().min(1, t("اختر الخدمة", "Pick a service")),
+  goal: z.string().trim().min(5, t("صف هدف الحملة", "Describe the campaign goal")).max(500),
   audience: z.string().trim().max(500),
   countries: z
     .string()
@@ -97,19 +94,20 @@ const briefSchema = z.object({
         .map((c) => c.trim().toUpperCase())
         .filter((c) => /^[A-Z]{2}$/.test(c)),
     )
-    .refine((v) => v.length > 0, "أدخل رمز دولة واحد على الأقل مثل OM"),
-  daily_budget: z.coerce.number().positive("أدخل ميزانية يومية").max(100000),
-  duration_days: z.coerce.number().int().min(2, "يومان على الأقل").max(90),
+    .refine((v) => v.length > 0, t("أدخل رمز دولة واحد على الأقل مثل OM", "Enter at least one country code like OM")),
+  daily_budget: z.coerce.number().positive(t("أدخل ميزانية يومية", "Enter a daily budget")).max(100000),
+  duration_days: z.coerce.number().int().min(2, t("يومان على الأقل", "At least 2 days")).max(90),
   language: z.enum(["ar", "en"]),
   offer: z.string().trim().max(300),
-  image_url: z.string().trim().min(1, "اختر صورة الإعلان"),
+  image_url: z.string().trim().min(1, t("اختر صورة الإعلان", "Pick the ad image")),
 });
 
 export async function generateCampaign(_prev: FormState, formData: FormData): Promise<FormState> {
-  const admin = await requireAdmin();
+  const admin = await requireSection("marketing");
+  const { t } = await getDashT();
   const values = formObject(formData);
-  const parsed = briefSchema.safeParse(values);
-  if (!parsed.success) return { ok: false, message: "راجع الحقول المظللة.", errors: fieldErrors(parsed.error), values };
+  const parsed = briefSchema(t).safeParse(values);
+  if (!parsed.success) return { ok: false, message: t("راجع الحقول المظللة.", "Check the highlighted fields."), errors: fieldErrors(parsed.error), values };
   const brief = parsed.data;
   const conn = await connection(admin);
   const currency = conn?.ad_account_currency ?? "USD";
@@ -129,7 +127,7 @@ export async function generateCampaign(_prev: FormState, formData: FormData): Pr
       offer: brief.offer,
     });
   } catch (e) {
-    return { ok: false, message: e instanceof AiError ? e.message : "تعذّر توليد الحملة. حاول مرة أخرى.", values };
+    return { ok: false, message: e instanceof AiError ? e.message : t("تعذّر توليد الحملة. حاول مرة أخرى.", "Could not generate the campaign. Try again."), values };
   }
 
   const { data, error } = await admin.supabase
@@ -145,7 +143,7 @@ export async function generateCampaign(_prev: FormState, formData: FormData): Pr
     })
     .select("id")
     .single();
-  if (error) return { ok: false, message: `تعذّر حفظ المسودة: ${error.message}`, values };
+  if (error) return { ok: false, message: t("تعذّر حفظ المسودة: ", "Could not save the draft: ") + error.message, values };
   revalidatePath("/dashboard/marketing");
   redirect(`/dashboard/marketing/${data.id}?generated=1`);
 }
@@ -156,35 +154,37 @@ const lines = (v: string) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
-const planEditSchema = z.object({
+const planEditSchema = (t: T) =>
+  z.object({
   campaign_name: z.string().trim().min(2).max(100),
-  headline: z.string().trim().min(2, "أدخل العنوان").max(40, "40 حرفاً كحد أقصى"),
-  primary_text: z.string().trim().min(10, "أدخل نص الإعلان").max(500, "500 حرف كحد أقصى"),
-  description: z.string().trim().max(30, "30 حرفاً كحد أقصى"),
-  welcome_message: z.string().trim().min(2, "أدخل رسالة الترحيب").max(200, "200 حرف كحد أقصى"),
+  headline: z.string().trim().min(2, t("أدخل العنوان", "Enter the headline")).max(40, t("40 حرفاً كحد أقصى", "40 characters max")),
+  primary_text: z.string().trim().min(10, t("أدخل نص الإعلان", "Enter the ad text")).max(500, t("500 حرف كحد أقصى", "500 characters max")),
+  description: z.string().trim().max(30, t("30 حرفاً كحد أقصى", "30 characters max")),
+  welcome_message: z.string().trim().min(2, t("أدخل رسالة الترحيب", "Enter the welcome message")).max(200, t("200 حرف كحد أقصى", "200 characters max")),
   icebreakers: z.string().transform(lines),
   age_min: z.coerce.number().int().min(18).max(65),
   age_max: z.coerce.number().int().min(18).max(65),
   gender: z.enum(["all", "male", "female"]),
   countries: z.string(),
   interests: z.string().transform((v) => v.split(/[,،\n]/).map((s) => s.trim()).filter(Boolean)),
-  daily_budget: z.coerce.number().positive("أدخل ميزانية يومية").max(100000),
-  duration_days: z.coerce.number().int().min(2, "يومان على الأقل").max(90),
-  image_url: z.string().trim().min(1, "اختر صورة الإعلان"),
+  daily_budget: z.coerce.number().positive(t("أدخل ميزانية يومية", "Enter a daily budget")).max(100000),
+  duration_days: z.coerce.number().int().min(2, t("يومان على الأقل", "At least 2 days")).max(90),
+  image_url: z.string().trim().min(1, t("اختر صورة الإعلان", "Pick the ad image")),
 });
 
 export async function savePlan(_prev: FormState, formData: FormData): Promise<FormState> {
-  const admin = await requireAdmin();
+  const admin = await requireSection("marketing");
+  const { t } = await getDashT();
   const id = String(formData.get("id") ?? "");
   const values = formObject(formData);
-  const parsed = planEditSchema.safeParse(values);
-  if (!parsed.success) return { ok: false, message: "راجع الحقول المظللة.", errors: fieldErrors(parsed.error), values };
+  const parsed = planEditSchema(t).safeParse(values);
+  if (!parsed.success) return { ok: false, message: t("راجع الحقول المظللة.", "Check the highlighted fields."), errors: fieldErrors(parsed.error), values };
   const v = parsed.data;
-  if (v.age_max < v.age_min) return { ok: false, message: "العمر الأقصى أصغر من الأدنى.", errors: { age_max: "يجب أن يكون أكبر من العمر الأدنى" }, values };
+  if (v.age_max < v.age_min) return { ok: false, message: t("العمر الأقصى أصغر من الأدنى.", "Max age is below min age."), errors: { age_max: t("يجب أن يكون أكبر من العمر الأدنى", "Must be above the min age") }, values };
 
   const { data: existing } = await admin.supabase.from("ad_campaigns").select("plan, status").eq("id", id).maybeSingle();
-  if (!existing) return { ok: false, message: "الحملة غير موجودة." };
-  if (existing.status === "created") return { ok: false, message: "أُنشئت هذه الحملة في Meta بالفعل. عدّلها من مدير الإعلانات." };
+  if (!existing) return { ok: false, message: t("الحملة غير موجودة.", "Campaign not found.") };
+  if (existing.status === "created") return { ok: false, message: t("أُنشئت هذه الحملة في Meta بالفعل. عدّلها من مدير الإعلانات.", "This campaign already exists in Meta. Edit it in Ads Manager.") };
 
   const plan = normalizePlan(
     {
@@ -207,13 +207,13 @@ export async function savePlan(_prev: FormState, formData: FormData): Promise<Fo
     .from("ad_campaigns")
     .update({ title: plan.campaign_name, plan, daily_budget: v.daily_budget, duration_days: v.duration_days, image_url: v.image_url })
     .eq("id", id);
-  if (error) return { ok: false, message: `تعذّر الحفظ: ${error.message}`, values };
+  if (error) return { ok: false, message: t("تعذّر الحفظ: ", "Could not save: ") + error.message, values };
   revalidatePath(`/dashboard/marketing/${id}`);
-  return { ok: true, message: "تم حفظ التعديلات." };
+  return { ok: true, message: t("تم حفظ التعديلات.", "Changes saved.") };
 }
 
 export async function deleteCampaignDraft(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireSection("marketing");
   await admin.supabase.from("ad_campaigns").delete().eq("id", String(formData.get("id")));
   revalidatePath("/dashboard/marketing");
   redirect("/dashboard/marketing");
@@ -225,20 +225,21 @@ export async function deleteCampaignDraft(formData: FormData) {
 async function imageBase64(url: string) {
   const absolute = url.startsWith("http") ? url : `${site.url}${url}`;
   const res = await fetch(absolute, { cache: "no-store" });
-  if (!res.ok) throw new Error(`تعذّر تحميل صورة الإعلان (${res.status}).`);
+  if (!res.ok) throw new Error(`Ad image download failed (${res.status}).`);
   return Buffer.from(await res.arrayBuffer()).toString("base64");
 }
 
 export async function publishToMeta(_prev: FormState, formData: FormData): Promise<FormState> {
-  const admin = await requireAdmin();
+  const admin = await requireSection("marketing");
+  const { t } = await getDashT();
   const id = String(formData.get("id") ?? "");
   const conn = await connection(admin);
-  if (!conn?.ad_account_id || !conn.page_id) return { ok: false, message: "أكمل ربط Meta (الحساب الإعلاني والصفحة) أولاً." };
-  if (conn.token_expires_at && new Date(conn.token_expires_at) < new Date()) return { ok: false, message: "انتهت صلاحية ربط Meta. أعد الربط من صفحة الحملات." };
+  if (!conn?.ad_account_id || !conn.page_id) return { ok: false, message: t("أكمل ربط Meta (الحساب الإعلاني والصفحة) أولاً.", "Finish connecting Meta (ad account and Page) first.") };
+  if (conn.token_expires_at && new Date(conn.token_expires_at) < new Date()) return { ok: false, message: t("انتهت صلاحية ربط Meta. أعد الربط من صفحة الحملات.", "The Meta connection expired. Reconnect from the Campaigns page.") };
 
   const { data: row } = await admin.supabase.from("ad_campaigns").select("*").eq("id", id).maybeSingle();
-  if (!row) return { ok: false, message: "الحملة غير موجودة." };
-  if (row.status === "created") return { ok: true, message: "الحملة موجودة في Meta بالفعل." };
+  if (!row) return { ok: false, message: t("الحملة غير موجودة.", "Campaign not found.") };
+  if (row.status === "created") return { ok: true, message: t("الحملة موجودة في Meta بالفعل.", "The campaign is already in Meta.") };
   const plan = row.plan as AdPlan;
 
   const record = async (r: { campaignId?: string; adsetId?: string; creativeId?: string; adId?: string }) => {
@@ -276,12 +277,12 @@ export async function publishToMeta(_prev: FormState, formData: FormData): Promi
     );
     await admin.supabase.from("ad_campaigns").update({ status: "created", error: null }).eq("id", id);
   } catch (e) {
-    const message = e instanceof MetaError ? `Meta: ${e.message}` : e instanceof Error ? e.message : "خطأ غير متوقع";
+    const message = e instanceof MetaError ? `Meta: ${e.message}` : e instanceof Error ? e.message : t("خطأ غير متوقع", "Unexpected error");
     await admin.supabase.from("ad_campaigns").update({ status: "failed", error: message }).eq("id", id);
     revalidatePath(`/dashboard/marketing/${id}`);
-    return { ok: false, message: `تعذّر إنشاء الحملة: ${message}` };
+    return { ok: false, message: t("تعذّر إنشاء الحملة: ", "Could not create the campaign: ") + message };
   }
   revalidatePath("/dashboard/marketing");
   revalidatePath(`/dashboard/marketing/${id}`);
-  return { ok: true, message: "تم إنشاء الحملة في Meta وهي متوقفة (PAUSED). راجعها وفعّلها من مدير الإعلانات." };
+  return { ok: true, message: t("تم إنشاء الحملة في Meta وهي متوقفة (PAUSED). راجعها وفعّلها من مدير الإعلانات.", "Campaign created in Meta as PAUSED. Review and activate it in Ads Manager.") };
 }

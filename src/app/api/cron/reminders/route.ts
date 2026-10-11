@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
+import { syncMetaLeads } from "@/lib/leads";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getBookingSettings, getEmailSettings } from "@/lib/settings";
 import { isEmailReady, reminderMail, sendMail } from "@/lib/email";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Daily job (vercel.json cron): emails a reminder to every client with a confirmed
- * consultation tomorrow. Protected by CRON_SECRET; safe to run more than once a day.
+ * consultation tomorrow, and pulls new Meta lead-form submissions into Clients.
+ * Protected by CRON_SECRET; safe to run more than once a day.
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -18,6 +20,9 @@ export async function GET(request: NextRequest) {
   }
   const db = createServiceClient();
   if (!db) return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY is not set" }, { status: 500 });
+
+  // Lead sync is independent of reminders; it skips itself when Meta isn't connected.
+  after(() => syncMetaLeads());
 
   const [booking, email] = await Promise.all([getBookingSettings(), getEmailSettings()]);
   if (!booking.reminders) return NextResponse.json({ sent: 0, skipped: "reminders are off" });

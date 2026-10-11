@@ -3,8 +3,10 @@
 /* eslint-disable @next/next/no-img-element -- local previews of picked files can't use next/image */
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
+import { useT } from "./DashLang";
 
 export function ImageField({ name, label, value, error }: { name: string; label: string; value?: string | null; error?: string }) {
+  const { t } = useT();
   const [preview, setPreview] = useState<string | null>(value ?? null);
   const [removed, setRemoved] = useState(false);
   const input = useRef<HTMLInputElement>(null);
@@ -27,7 +29,7 @@ export function ImageField({ name, label, value, error }: { name: string; label:
         <div className="space-y-2">
           <label className="btn btn-outline btn-sm cursor-pointer">
             <ImagePlus className="size-4" aria-hidden />
-            {preview ? "تغيير الصورة" : "اختيار صورة"}
+            {preview ? t("تغيير الصورة", "Change image") : t("اختيار صورة", "Choose image")}
             <input
               ref={input}
               type="file"
@@ -54,10 +56,10 @@ export function ImageField({ name, label, value, error }: { name: string; label:
               }}
             >
               <Trash2 className="size-4" aria-hidden />
-              إزالة
+              {t("إزالة", "Remove")}
             </button>
           )}
-          <p className="field-hint">JPG أو PNG أو WebP، بحد أقصى 5 ميغابايت. المقاس المقترح 1600×1000.</p>
+          <p className="field-hint">{t("JPG أو PNG أو WebP، بحد أقصى 5 ميغابايت. المقاس المقترح 1600×1000.", "JPG, PNG or WebP, up to 5 MB. Suggested size 1600×1000.")}</p>
           {error && <p className="field-error">{error}</p>}
         </div>
       </div>

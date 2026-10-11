@@ -126,3 +126,72 @@ export type Package = {
   is_published: boolean;
   sort_order: number;
 };
+
+export type TaskStatus = "todo" | "doing" | "done";
+export type TaskPriority = "low" | "normal" | "high" | "urgent";
+export type TaskRecurrence = "none" | "daily" | "weekdays" | "weekly" | "monthly";
+
+export type Task = {
+  id: string;
+  title: string;
+  notes: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  due_date: string | null;
+  due_time: string | null;
+  recurrence: TaskRecurrence;
+  assignee_id: string | null;
+  created_by: string | null;
+  contact_id: string | null;
+  consultation_id: string | null;
+  source: "manual" | "auto";
+  position: number;
+  completed_at: string | null;
+  created_at: string;
+  contact?: { id: string; full_name: string } | null;
+};
+
+export type ContactStage = "new" | "contacted" | "qualified" | "proposal" | "won" | "lost";
+export type ContactSource =
+  | "website"
+  | "booking"
+  | "contact_form"
+  | "whatsapp"
+  | "meta_ads"
+  | "meta_lead_form"
+  | "google_ads"
+  | "instagram"
+  | "referral"
+  | "manual"
+  | "other";
+
+export type Contact = {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  phone_norm: string | null;
+  wa_id: string | null;
+  email: string | null;
+  company: string | null;
+  source: ContactSource;
+  campaign: string | null;
+  utm: Record<string, string>;
+  stage: ContactStage;
+  value: number | null;
+  service_slug: string | null;
+  tags: string[];
+  notes: string | null;
+  assignee_id: string | null;
+  last_activity_at: string;
+  created_at: string;
+};
+
+export type ContactActivity = {
+  id: string;
+  contact_id: string;
+  kind: "note" | "call" | "whatsapp_in" | "whatsapp_out" | "email" | "meeting" | "booking" | "message" | "lead" | "stage" | "task";
+  body: string | null;
+  meta: Record<string, string>;
+  author_id: string | null;
+  created_at: string;
+};

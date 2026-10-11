@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ExternalLink, Lightbulb, Trash2 } from "lucide-react";
-import { getAdmin } from "@/lib/supabase/server";
+import { requireSection } from "@/lib/supabase/server";
 import { deleteCampaignDraft, type MetaConnection } from "@/actions/marketing";
 import { adsManagerUrl } from "@/lib/meta";
 import type { AdPlan } from "@/lib/ai";
@@ -9,14 +9,18 @@ import { ConfirmButton } from "@/components/dashboard/ConfirmButton";
 import { PlanEditor, PublishForm } from "@/components/dashboard/marketing";
 import { Panel, SavedNotice } from "@/components/dashboard/ui";
 import { adImages } from "../images";
+import { getDashT } from "@/lib/dash";
 
-export const metadata = { title: "مراجعة الحملة" };
+export async function generateMetadata() {
+  const { t } = await getDashT();
+  return { title: t("مراجعة الحملة", "Review campaign") };
+}
 
 export default async function CampaignPage(props: PageProps<"/dashboard/marketing/[id]">) {
-  const admin = await getAdmin();
-  if (!admin) redirect("/login");
+  const admin = await requireSection("marketing");
   const { id } = await props.params;
   const { generated } = await props.searchParams;
+  const { t } = await getDashT();
 
   const [{ data: row }, { data: connData }, images] = await Promise.all([
     admin.supabase.from("ad_campaigns").select("*").eq("id", id).maybeSingle(),
@@ -36,25 +40,25 @@ export default async function CampaignPage(props: PageProps<"/dashboard/marketin
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Link href="/dashboard/marketing" className="text-sm font-semibold text-violet hover:underline">
-            ← الحملات الإعلانية
+            {t("→ الحملات الإعلانية", "← Campaigns")}
           </Link>
           <h1 className="mt-2 text-[28px] font-bold text-night">{row.title}</h1>
           <p className="mt-1 text-muted">
-            {row.daily_budget} {currency} يومياً × {row.duration_days} أيام ≈ {total.toFixed(2)} {currency} كحد أقصى
+            {row.daily_budget} {currency} {t("يومياً", "/day")} × {row.duration_days} {t("أيام", "days")} ≈ {total.toFixed(2)} {currency} {t("كحد أقصى", "max")}
           </p>
         </div>
         {!created && (
           <form action={deleteCampaignDraft}>
             <input type="hidden" name="id" value={row.id} />
-            <ConfirmButton className="btn btn-danger btn-sm" message="حذف هذه المسودة؟">
+            <ConfirmButton className="btn btn-danger btn-sm" message={t("حذف هذه المسودة؟", "Delete this draft?")}>
               <Trash2 className="size-4" aria-hidden />
-              حذف المسودة
+              {t("حذف المسودة", "Delete draft")}
             </ConfirmButton>
           </form>
         )}
       </div>
 
-      <SavedNotice show={generated === "1"} text="جهّز الذكاء الاصطناعي مسودة الحملة. راجع النصوص والاستهداف وعدّل ما تريد قبل الإنشاء في Meta." />
+      <SavedNotice show={generated === "1"} text={t("جهّز الذكاء الاصطناعي مسودة الحملة. راجع النصوص والاستهداف وعدّل ما تريد قبل الإنشاء في Meta.", "AI drafted the campaign. Review the copy and targeting, and edit anything before creating it in Meta.")} />
 
       {plan.rationale && (
         <Panel className="mb-6">
@@ -85,13 +89,13 @@ export default async function CampaignPage(props: PageProps<"/dashboard/marketin
         locked={created}
       />
 
-      <Panel title="الإنشاء في Meta" className="mt-6">
+      <Panel title={t("الإنشاء في Meta", "Create in Meta")} className="mt-6">
         <div className="space-y-4 p-5">
           {created ? (
             <>
               <p className="text-[15px] leading-7 text-night">
-                أُنشئت الحملة في Meta بحالة <strong>متوقفة</strong>. افتحها في مدير الإعلانات لمراجعتها، ثم فعّلها عندما تكون جاهزاً. ستمر بمراجعة Meta قبل
-                بدء العرض.
+                {t("أُنشئت الحملة في Meta بحالة", "The campaign was created in Meta as")} <strong>{t("متوقفة", "paused")}</strong>.{" "}
+                {t("افتحها في مدير الإعلانات لمراجعتها، ثم فعّلها عندما تكون جاهزاً. ستمر بمراجعة Meta قبل بدء العرض.", "Open it in Ads Manager to review, then activate it when ready. Meta reviews it before delivery.")}
               </p>
               <dl className="grid gap-2 text-sm sm:grid-cols-2" dir="ltr">
                 <div>
@@ -106,27 +110,31 @@ export default async function CampaignPage(props: PageProps<"/dashboard/marketin
               {conn?.ad_account_id && (
                 <a href={adsManagerUrl(conn.ad_account_id, row.meta_campaign_id)} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm">
                   <ExternalLink className="size-4" aria-hidden />
-                  فتح في مدير الإعلانات
+                  {t("فتح في مدير الإعلانات", "Open in Ads Manager")}
                 </a>
               )}
             </>
           ) : (
             <>
               <p className="text-[15px] leading-7 text-muted">
-                سيُنشأ: حملة تفاعل ← مجموعة إعلانية بوجهة واتساب ← إعلان بصورتك وزر «إرسال رسالة» ورسالة الترحيب. <strong className="text-night">كل شيء يُنشأ متوقفاً</strong> ولا
-                يُصرف شيء حتى تفعّله بنفسك من مدير الإعلانات.
+                {t(
+                  "سيُنشأ: حملة تفاعل ← مجموعة إعلانية بوجهة واتساب ← إعلان بصورتك وزر «إرسال رسالة» ورسالة الترحيب.",
+                  "This creates: an engagement campaign → a WhatsApp ad set → an ad with your image, a “Send message” button and the welcome message.",
+                )}{" "}
+                <strong className="text-night">{t("كل شيء يُنشأ متوقفاً", "Everything is created paused")}</strong>{" "}
+                {t("ولا يُصرف شيء حتى تفعّله بنفسك من مدير الإعلانات.", "and nothing is spent until you activate it in Ads Manager.")}
               </p>
               {row.status === "failed" && row.error && (
                 <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-900">
-                  آخر محاولة فشلت: {row.error}
-                  {row.meta_campaign_id && " — قد تكون بعض العناصر أُنشئت متوقفة في مدير الإعلانات؛ احذفها هناك قبل إعادة المحاولة."}
+                  {t("آخر محاولة فشلت:", "Last attempt failed:")} {row.error}
+                  {row.meta_campaign_id && t(" — قد تكون بعض العناصر أُنشئت متوقفة في مدير الإعلانات؛ احذفها هناك قبل إعادة المحاولة.", " — some items may exist (paused) in Ads Manager; delete them there before retrying.")}
                 </p>
               )}
               {!ready && (
                 <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  أكمل ربط Meta واختر الحساب الإعلاني والصفحة من{" "}
+                  {t("أكمل ربط Meta واختر الحساب الإعلاني والصفحة من", "Finish connecting Meta and pick the ad account and Page on the")}{" "}
                   <Link href="/dashboard/marketing" className="font-semibold underline">
-                    صفحة الحملات
+                    {t("صفحة الحملات", "Campaigns page")}
                   </Link>
                   .
                 </p>
@@ -134,7 +142,10 @@ export default async function CampaignPage(props: PageProps<"/dashboard/marketin
               <PublishForm
                 id={row.id}
                 ready={ready}
-                budgetSummary={`الميزانية: ${row.daily_budget} ${currency} يومياً لمدة ${row.duration_days} أيام (≈ ${total.toFixed(2)} ${currency}).`}
+                budgetSummary={t(
+                  `الميزانية: ${row.daily_budget} ${currency} يومياً لمدة ${row.duration_days} أيام (≈ ${total.toFixed(2)} ${currency}).`,
+                  `Budget: ${row.daily_budget} ${currency}/day for ${row.duration_days} days (≈ ${total.toFixed(2)} ${currency}).`,
+                )}
               />
             </>
           )}

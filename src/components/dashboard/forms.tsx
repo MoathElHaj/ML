@@ -12,6 +12,8 @@ import { ImageField } from "./ImageField";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { SeoFields } from "./SeoFields";
 import { cn } from "@/lib/utils";
+import { Toggle } from "./kit";
+import { useT } from "./DashLang";
 
 const initial: FormState = { ok: false };
 
@@ -29,6 +31,7 @@ function TitleSlug({
   titleLabel: string;
   slugPrefix: string;
 }) {
+  const { t } = useT();
   const [slugValue, setSlugValue] = useState(slug ?? "");
   const [touched, setTouched] = useState(Boolean(slug));
   return (
@@ -44,7 +47,7 @@ function TitleSlug({
         }}
       />
       <TextField
-        label="الرابط (slug)"
+        label={t("الرابط (slug)", "URL slug")}
         name="slug"
         required
         dir="ltr"
@@ -54,45 +57,36 @@ function TitleSlug({
           setSlugValue(e.target.value.toLowerCase().replace(/\s+/g, "-"));
         }}
         error={errors.slug}
-        hint={`سيظهر هكذا: ${slugPrefix}${slugValue || "your-link"} — أحرف إنجليزية وأرقام وشرطات فقط`}
+        hint={t(`سيظهر هكذا: ${slugPrefix}${slugValue || "your-link"} — أحرف إنجليزية وأرقام وشرطات فقط`, `Shows as ${slugPrefix}${slugValue || "your-link"} — English letters, numbers and dashes only`)}
       />
     </>
   );
 }
 
-function Toggle({ name, label, hint, defaultChecked }: { name: string; label: string; hint?: string; defaultChecked?: boolean }) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line bg-white p-4">
-      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="peer sr-only" />
-      <span className="relative mt-0.5 h-6 w-11 shrink-0 rounded-full bg-[#cfc4e3] transition-colors peer-checked:bg-violet peer-focus-visible:outline peer-focus-visible:outline-3 peer-focus-visible:outline-violet after:absolute after:top-0.5 after:start-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:-translate-x-5" />
-      <span>
-        <span className="block font-semibold text-night">{label}</span>
-        {hint && <span className="block text-sm text-muted">{hint}</span>}
-      </span>
-    </label>
-  );
-}
-
 function FormActions({ pending, cancelHref, state }: { pending: boolean; cancelHref: string; state: FormState }) {
+  const { t } = useT();
   return (
     <div className="sticky bottom-0 -mx-4 flex flex-col gap-3 border-t border-line bg-white/95 px-4 py-4 backdrop-blur sm:-mx-8 sm:px-8">
       <FormAlert ok={false} message={state.message} />
       <div className="flex gap-3">
         <button type="submit" className="btn btn-primary" disabled={pending}>
           <Save className="size-4" aria-hidden />
-          {pending ? "جارٍ الحفظ…" : "حفظ"}
+          {pending ? t("جارٍ الحفظ…", "Saving…") : t("حفظ", "Save")}
         </button>
         <Link href={cancelHref} className="btn btn-outline">
-          إلغاء
+          {t("إلغاء", "Cancel")}
         </Link>
       </div>
     </div>
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+/** `arabic`: the card holds Arabic site content, so it stays right-to-left even when the dashboard is in English. */
+function Card({ title, children, arabic }: { title: string; children: React.ReactNode; arabic?: boolean }) {
+  const { lang } = useT();
+  const rtlContent = arabic && lang === "en";
   return (
-    <fieldset className="space-y-5 rounded-[20px] border border-line bg-white p-5 sm:p-6">
+    <fieldset className="space-y-5 rounded-[20px] border border-line bg-white p-5 sm:p-6" {...(rtlContent ? { dir: "rtl", lang: "ar" } : {})}>
       <legend className="sr-only">{title}</legend>
       <h2 className="font-bold text-night" aria-hidden>
         {title}
@@ -104,15 +98,18 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 
 /** Optional English version. The site shows Arabic when a field is left empty. */
 function EnglishCard({ children }: { children: React.ReactNode }) {
+  const { t } = useT();
   return (
     <details className="group rounded-[20px] border border-line bg-white" open>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 sm:p-6">
         <span>
-          <span className="block font-bold text-night">النسخة الإنجليزية · English</span>
-          <span className="block text-sm text-muted">اختيارية — تظهر لزوار الموقع الإنجليزي (/en). عند تركها فارغة يُعرض النص العربي.</span>
+          <span className="block font-bold text-night">{t("النسخة الإنجليزية · English", "English version")}</span>
+          <span className="block text-sm text-muted">
+            {t("اختيارية — تظهر لزوار الموقع الإنجليزي (/en). عند تركها فارغة يُعرض النص العربي.", "Optional — shown on the English site (/en). When empty, the Arabic text is shown.")}
+          </span>
         </span>
-        <span className="text-sm font-semibold text-violet group-open:hidden">إظهار</span>
-        <span className="hidden text-sm font-semibold text-violet group-open:inline">إخفاء</span>
+        <span className="text-sm font-semibold text-violet group-open:hidden">{t("إظهار", "Show")}</span>
+        <span className="hidden text-sm font-semibold text-violet group-open:inline">{t("إخفاء", "Hide")}</span>
       </summary>
       <div dir="ltr" lang="en" className="space-y-5 border-t border-line p-5 text-left sm:p-6">
         {children}
@@ -123,6 +120,7 @@ function EnglishCard({ children }: { children: React.ReactNode }) {
 
 // ---------------------------------------------------------------------------
 export function ServiceForm({ service }: { service?: Service }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(saveService, initial);
   const e = state.errors ?? {};
   const v = state.values;
@@ -131,31 +129,32 @@ export function ServiceForm({ service }: { service?: Service }) {
   return (
     <form action={action} className="space-y-6" noValidate>
       {service && <input type="hidden" name="id" value={service.id} />}
-      <Card title="المعلومات الأساسية">
+      <Card title={t("المعلومات الأساسية", "Main content · Arabic")} arabic>
         <div className="grid gap-5 sm:grid-cols-2">
-          <TitleSlug title={v?.title ?? service?.title} slug={v?.slug ?? service?.slug} errors={e} titleLabel="اسم الخدمة" slugPrefix="/services/" />
+          <TitleSlug title={v?.title ?? service?.title} slug={v?.slug ?? service?.slug} errors={e} titleLabel={t("اسم الخدمة", "Service name")} slugPrefix="/services/" />
         </div>
-        <TextField label="وصف مختصر" name="summary" defaultValue={v?.summary ?? service?.summary} error={e.summary} hint="سطر واحد يظهر في بطاقة الخدمة." />
-        <TextArea label="الوصف الكامل" name="description" rows={5} defaultValue={v?.description ?? service?.description} error={e.description} />
+        <TextField label={t("وصف مختصر", "Short summary")} name="summary" defaultValue={v?.summary ?? service?.summary} error={e.summary} hint={t("سطر واحد يظهر في بطاقة الخدمة.", "One line shown on the service card.")} />
+        <TextArea label={t("الوصف الكامل", "Full description")} name="description" rows={5} defaultValue={v?.description ?? service?.description} error={e.description} />
         <TextArea
-          label="ماذا تشمل الخدمة؟"
+          label={t("ماذا تشمل الخدمة؟", "What's included")}
           name="features"
           rows={5}
           defaultValue={v?.features ?? service?.features.join("\n")}
           error={e.features}
-          hint="ميزة واحدة في كل سطر."
+          hint={t("ميزة واحدة في كل سطر.", "One item per line.")}
         />
         <MarkdownEditor
-          label="محتوى صفحة الخدمة (اختياري)"
+          label={t("محتوى صفحة الخدمة (اختياري)", "Service page content (optional)")}
           name="content"
           rows={10}
           folder="services"
+          dir="rtl"
           defaultValue={v?.content ?? service?.content ?? ""}
           error={e.content}
-          hint="يظهر في صفحة الخدمة: لمن تناسب، المراحل، الأسئلة الشائعة. محتوى أطول = ظهور أفضل في البحث."
+          hint={t("يظهر في صفحة الخدمة: لمن تناسب، المراحل، الأسئلة الشائعة. محتوى أطول = ظهور أفضل في البحث.", "Shown on the service page: who it's for, steps, FAQs. Longer content ranks better.")}
         />
       </Card>
-      <Card title="تحسين الظهور في محركات البحث (SEO)">
+      <Card title={t("تحسين الظهور في محركات البحث (SEO)", "Search engine optimisation (SEO) · Arabic")} arabic>
         <SeoFields
           path={`/services/${service?.slug ?? "…"}`}
           fallbackTitle={service?.title}
@@ -189,11 +188,11 @@ export function ServiceForm({ service }: { service?: Service }) {
           errors={e}
         />
       </EnglishCard>
-      <Card title="المظهر">
+      <Card title={t("المظهر", "Appearance")}>
         <div>
-          <span className="field-label">الأيقونة</span>
+          <span className="field-label">{t("الأيقونة", "Icon")}</span>
           <input type="hidden" name="icon" value={icon} />
-          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="الأيقونة">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("الأيقونة", "Icon")}>
             {serviceIconOptions.map((name) => (
               <button
                 key={name}
@@ -212,12 +211,12 @@ export function ServiceForm({ service }: { service?: Service }) {
             ))}
           </div>
         </div>
-        <ImageField key={state.message ?? "init"} name="image_url" label="صورة الخدمة" value={service?.image_url} error={e.image_url} />
+        <ImageField key={state.message ?? "init"} name="image_url" label={t("صورة الخدمة", "Service image")} value={service?.image_url} error={e.image_url} />
       </Card>
-      <Card title="النشر">
+      <Card title={t("النشر", "Publishing")}>
         <div className="grid gap-5 sm:grid-cols-2">
-          <Toggle name="is_published" label="منشورة على الموقع" defaultChecked={v ? v.is_published === "on" : service?.is_published ?? true} />
-          <TextField label="ترتيب الظهور" name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(service?.sort_order ?? 0)} error={e.sort_order} hint="الأصغر يظهر أولاً." />
+          <Toggle name="is_published" label={t("منشورة على الموقع", "Published on the website")} defaultChecked={v ? v.is_published === "on" : service?.is_published ?? true} />
+          <TextField label={t("ترتيب الظهور", "Sort order")} name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(service?.sort_order ?? 0)} error={e.sort_order} hint={t("الأصغر يظهر أولاً.", "Lower shows first.")} />
         </div>
       </Card>
       <FormActions pending={pending} cancelHref="/dashboard/services" state={state} />
@@ -227,6 +226,7 @@ export function ServiceForm({ service }: { service?: Service }) {
 
 // ---------------------------------------------------------------------------
 export function ProjectForm({ project, services }: { project?: Project; services: { id: string; title: string }[] }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(saveProject, initial);
   const e = state.errors ?? {};
   const v = state.values;
@@ -234,12 +234,12 @@ export function ProjectForm({ project, services }: { project?: Project; services
   return (
     <form action={action} className="space-y-6" noValidate>
       {project && <input type="hidden" name="id" value={project.id} />}
-      <Card title="المعلومات الأساسية">
+      <Card title={t("المعلومات الأساسية", "Main content · Arabic")} arabic>
         <div className="grid gap-5 sm:grid-cols-2">
-          <TitleSlug title={v?.title ?? project?.title} slug={v?.slug ?? project?.slug} errors={e} titleLabel="اسم المشروع" slugPrefix="/portfolio/" />
-          <TextField label="اسم العميل" name="client" defaultValue={v?.client ?? project?.client ?? ""} error={e.client} />
-          <SelectField label="الخدمة" name="service_id" defaultValue={v?.service_id ?? project?.service_id ?? ""} error={e.service_id}>
-            <option value="">بدون</option>
+          <TitleSlug title={v?.title ?? project?.title} slug={v?.slug ?? project?.slug} errors={e} titleLabel={t("اسم المشروع", "Project name")} slugPrefix="/portfolio/" />
+          <TextField label={t("اسم العميل", "Client name")} name="client" defaultValue={v?.client ?? project?.client ?? ""} error={e.client} />
+          <SelectField label={t("الخدمة", "Service")} name="service_id" defaultValue={v?.service_id ?? project?.service_id ?? ""} error={e.service_id}>
+            <option value="">{t("بدون", "None")}</option>
             {services.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.title}
@@ -247,19 +247,20 @@ export function ProjectForm({ project, services }: { project?: Project; services
             ))}
           </SelectField>
         </div>
-        <TextArea label="ملخص قصير" name="summary" rows={2} defaultValue={v?.summary ?? project?.summary} error={e.summary} />
+        <TextArea label={t("ملخص قصير", "Short summary")} name="summary" rows={2} defaultValue={v?.summary ?? project?.summary} error={e.summary} />
         <MarkdownEditor
-          label="تفاصيل المشروع"
+          label={t("تفاصيل المشروع", "Project details")}
           name="description"
           rows={10}
           folder="projects"
+          dir="rtl"
           defaultValue={v?.description ?? project?.description}
           error={e.description}
-          hint="التحدي، الحل، والنتيجة. يمكنك إدراج صور من المشروع."
+          hint={t("التحدي، الحل، والنتيجة. يمكنك إدراج صور من المشروع.", "Challenge, solution and result. You can insert images from the project.")}
         />
         <div className="grid gap-5 sm:grid-cols-2">
-          <TextField label="رابط المشروع" name="link_url" type="url" dir="ltr" placeholder="https://" defaultValue={v?.link_url ?? project?.link_url ?? ""} error={e.link_url} />
-          <TextField label="الوسوم" name="tags" defaultValue={v?.tags ?? project?.tags.join("، ")} error={e.tags} hint="افصل بينها بفاصلة، مثل: مطاعم، هوية بصرية" />
+          <TextField label={t("رابط المشروع", "Project link")} name="link_url" type="url" dir="ltr" placeholder="https://" defaultValue={v?.link_url ?? project?.link_url ?? ""} error={e.link_url} />
+          <TextField label={t("الوسوم", "Tags")} name="tags" defaultValue={v?.tags ?? project?.tags.join("، ")} error={e.tags} hint={t("افصل بينها بفاصلة، مثل: مطاعم، هوية بصرية", "Comma separated, e.g. مطاعم، هوية بصرية")} />
         </div>
       </Card>
       <EnglishCard>
@@ -268,14 +269,14 @@ export function ProjectForm({ project, services }: { project?: Project; services
         <MarkdownEditor label="Project details" name="description_en" rows={8} folder="projects" dir="ltr" defaultValue={v?.description_en ?? project?.description_en ?? ""} error={e.description_en} />
         <TextField label="Tags" name="tags_en" defaultValue={v?.tags_en ?? project?.tags_en?.join(", ") ?? ""} error={e.tags_en} hint="Comma separated, e.g. Restaurants, Branding" />
       </EnglishCard>
-      <Card title="صورة الغلاف">
-        <ImageField key={state.message ?? "init"} name="cover_url" label="الصورة الرئيسية" value={project?.cover_url} error={e.cover_url} />
+      <Card title={t("صورة الغلاف", "Cover image")}>
+        <ImageField key={state.message ?? "init"} name="cover_url" label={t("الصورة الرئيسية", "Main image")} value={project?.cover_url} error={e.cover_url} />
       </Card>
-      <Card title="النشر">
+      <Card title={t("النشر", "Publishing")}>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Toggle name="is_published" label="منشور على الموقع" defaultChecked={v ? v.is_published === "on" : project?.is_published ?? true} />
-          <Toggle name="is_featured" label="عمل مميز" hint="يظهر أولاً في الرئيسية" defaultChecked={v ? v.is_featured === "on" : project?.is_featured} />
-          <TextField label="ترتيب الظهور" name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(project?.sort_order ?? 0)} error={e.sort_order} />
+          <Toggle name="is_published" label={t("منشور على الموقع", "Published on the website")} defaultChecked={v ? v.is_published === "on" : project?.is_published ?? true} />
+          <Toggle name="is_featured" label={t("عمل مميز", "Featured")} hint={t("يظهر أولاً في الرئيسية", "Shown first on the home page")} defaultChecked={v ? v.is_featured === "on" : project?.is_featured} />
+          <TextField label={t("ترتيب الظهور", "Sort order")} name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(project?.sort_order ?? 0)} error={e.sort_order} />
         </div>
       </Card>
       <FormActions pending={pending} cancelHref="/dashboard/projects" state={state} />
@@ -285,6 +286,7 @@ export function ProjectForm({ project, services }: { project?: Project; services
 
 // ---------------------------------------------------------------------------
 export function PostForm({ post }: { post?: Post }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(savePost, initial);
   const e = state.errors ?? {};
   const v = state.values;
@@ -293,25 +295,26 @@ export function PostForm({ post }: { post?: Post }) {
     <form action={action} className="space-y-6" noValidate>
       {post && <input type="hidden" name="id" value={post.id} />}
       {post?.published_at && <input type="hidden" name="published_at" value={post.published_at} />}
-      <Card title="المقال">
+      <Card title={t("المقال", "Article · Arabic")} arabic>
         <div className="grid gap-5 sm:grid-cols-2">
-          <TitleSlug title={v?.title ?? post?.title} slug={v?.slug ?? post?.slug} errors={e} titleLabel="عنوان المقال" slugPrefix="/blog/" />
-          <TextField label="التصنيف" name="category" defaultValue={v?.category ?? post?.category ?? ""} error={e.category} placeholder="مثل: تسويق رقمي" />
-          <TextField label="الكاتب" name="author_name" defaultValue={v?.author_name ?? post?.author_name ?? "فريق بريق"} error={e.author_name} />
+          <TitleSlug title={v?.title ?? post?.title} slug={v?.slug ?? post?.slug} errors={e} titleLabel={t("عنوان المقال", "Title")} slugPrefix="/blog/" />
+          <TextField label={t("التصنيف", "Category")} name="category" defaultValue={v?.category ?? post?.category ?? ""} error={e.category} placeholder="مثل: تسويق رقمي" />
+          <TextField label={t("الكاتب", "Author")} name="author_name" defaultValue={v?.author_name ?? post?.author_name ?? "فريق بريق"} error={e.author_name} />
         </div>
-        <TextArea label="مقتطف" name="excerpt" rows={2} defaultValue={v?.excerpt ?? post?.excerpt} error={e.excerpt} hint="جملة أو جملتان تظهر في قائمة المقالات ونتائج البحث." />
+        <TextArea label={t("مقتطف", "Excerpt")} name="excerpt" rows={2} defaultValue={v?.excerpt ?? post?.excerpt} error={e.excerpt} hint={t("جملة أو جملتان تظهر في قائمة المقالات ونتائج البحث.", "One or two sentences shown in the blog list and search results.")} />
         <MarkdownEditor
-          label="المحتوى"
+          label={t("المحتوى", "Content")}
           name="content"
           rows={18}
           required
           folder="posts"
+          dir="rtl"
           defaultValue={v?.content ?? post?.content}
           error={e.content}
-          hint="استخدم عناوين ## واضحة، وأضف روابط لصفحات خدماتك، وصوراً بوصف مناسب."
+          hint={t("استخدم عناوين ## واضحة، وأضف روابط لصفحات خدماتك، وصوراً بوصف مناسب.", "Use clear ## headings, link to your service pages, and add images with good alt text.")}
         />
       </Card>
-      <Card title="تحسين الظهور في محركات البحث (SEO)">
+      <Card title={t("تحسين الظهور في محركات البحث (SEO)", "Search engine optimisation (SEO) · Arabic")} arabic>
         <SeoFields
           path={`/blog/${post?.slug ?? "…"}`}
           fallbackTitle={post?.title}
@@ -340,14 +343,14 @@ export function PostForm({ post }: { post?: Post }) {
           errors={e}
         />
       </EnglishCard>
-      <Card title="صورة الغلاف">
-        <ImageField key={state.message ?? "init"} name="cover_url" label="صورة المقال" value={post?.cover_url} error={e.cover_url} />
+      <Card title={t("صورة الغلاف", "Cover image")}>
+        <ImageField key={state.message ?? "init"} name="cover_url" label={t("صورة المقال", "Article image")} value={post?.cover_url} error={e.cover_url} />
       </Card>
-      <Card title="النشر">
+      <Card title={t("النشر", "Publishing")}>
         <Toggle
           name="is_published"
-          label="نشر المقال"
-          hint="أوقفه لحفظ المقال كمسودة لا تظهر للزوار."
+          label={t("نشر المقال", "Publish article")}
+          hint={t("أوقفه لحفظ المقال كمسودة لا تظهر للزوار.", "Turn off to keep it as a hidden draft.")}
           defaultChecked={v ? v.is_published === "on" : post?.is_published ?? false}
         />
       </Card>
@@ -358,26 +361,27 @@ export function PostForm({ post }: { post?: Post }) {
 
 // ---------------------------------------------------------------------------
 export function PackageForm({ pkg }: { pkg?: Package }) {
+  const { t } = useT();
   const [state, action, pending] = useActionState(savePackage, initial);
   const e = state.errors ?? {};
   const v = state.values;
   return (
     <form action={action} className="space-y-6" noValidate>
       {pkg && <input type="hidden" name="id" value={pkg.id} />}
-      <Card title="الباقة">
-        <TextField label="اسم الباقة" name="name" required defaultValue={v?.name ?? pkg?.name} error={e.name} placeholder="مثل: الباقة الاحترافية" />
+      <Card title={t("الباقة", "Package · Arabic")} arabic>
+        <TextField label={t("اسم الباقة", "Package name")} name="name" required defaultValue={v?.name ?? pkg?.name} error={e.name} placeholder="مثل: الباقة الاحترافية" />
         <div className="grid gap-5 sm:grid-cols-3">
-          <TextField label="السعر" name="price" type="number" min={0} step="0.01" dir="ltr" required defaultValue={v?.price ?? (pkg ? String(pkg.price) : "")} error={e.price} />
-          <TextField label="العملة" name="currency" dir="ltr" maxLength={3} defaultValue={v?.currency ?? pkg?.currency ?? "OMR"} error={e.currency} />
-          <SelectField label="المدة" name="period" defaultValue={v?.period ?? pkg?.period ?? "month"}>
-            <option value="month">شهرياً</option>
-            <option value="year">سنوياً</option>
-            <option value="once">دفعة واحدة</option>
+          <TextField label={t("السعر", "Price")} name="price" type="number" min={0} step="0.01" dir="ltr" required defaultValue={v?.price ?? (pkg ? String(pkg.price) : "")} error={e.price} />
+          <TextField label={t("العملة", "Currency")} name="currency" dir="ltr" maxLength={3} defaultValue={v?.currency ?? pkg?.currency ?? "OMR"} error={e.currency} />
+          <SelectField label={t("المدة", "Billing")} name="period" defaultValue={v?.period ?? pkg?.period ?? "month"}>
+            <option value="month">{t("شهرياً", "Monthly")}</option>
+            <option value="year">{t("سنوياً", "Yearly")}</option>
+            <option value="once">{t("دفعة واحدة", "One-off")}</option>
           </SelectField>
         </div>
-        <TextField label="وصف مختصر" name="tagline" defaultValue={v?.tagline ?? pkg?.tagline} error={e.tagline} placeholder="لمن تناسب هذه الباقة؟" />
-        <TextArea label="ما تشمله الباقة" name="features" rows={6} required defaultValue={v?.features ?? pkg?.features.join("\n")} error={e.features} hint="ميزة واحدة في كل سطر." />
-        <TextField label="نص الزر" name="cta" defaultValue={v?.cta ?? pkg?.cta ?? ""} error={e.cta} placeholder="مثل: اختر الباقة الاحترافية" />
+        <TextField label={t("وصف مختصر", "Short description")} name="tagline" defaultValue={v?.tagline ?? pkg?.tagline} error={e.tagline} placeholder="لمن تناسب هذه الباقة؟" />
+        <TextArea label={t("ما تشمله الباقة", "What's included")} name="features" rows={6} required defaultValue={v?.features ?? pkg?.features.join("\n")} error={e.features} hint={t("ميزة واحدة في كل سطر.", "One item per line.")} />
+        <TextField label={t("نص الزر", "Button text")} name="cta" defaultValue={v?.cta ?? pkg?.cta ?? ""} error={e.cta} placeholder="مثل: اختر الباقة الاحترافية" />
       </Card>
       <EnglishCard>
         <TextField label="Package name" name="name_en" defaultValue={v?.name_en ?? pkg?.name_en ?? ""} error={e.name_en} />
@@ -385,11 +389,11 @@ export function PackageForm({ pkg }: { pkg?: Package }) {
         <TextArea label="What's included" name="features_en" rows={6} defaultValue={v?.features_en ?? pkg?.features_en?.join("\n") ?? ""} error={e.features_en} hint="One item per line." />
         <TextField label="Button text" name="cta_en" defaultValue={v?.cta_en ?? pkg?.cta_en ?? ""} error={e.cta_en} />
       </EnglishCard>
-      <Card title="العرض">
+      <Card title={t("العرض", "Display")}>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Toggle name="is_published" label="ظاهرة في صفحة الأسعار" defaultChecked={v ? v.is_published === "on" : pkg?.is_published ?? true} />
-          <Toggle name="is_featured" label="«الأكثر طلباً»" hint="تُميَّز في المنتصف" defaultChecked={v ? v.is_featured === "on" : pkg?.is_featured} />
-          <TextField label="ترتيب الظهور" name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(pkg?.sort_order ?? 0)} error={e.sort_order} hint="الأصغر يظهر أولاً." />
+          <Toggle name="is_published" label={t("ظاهرة في صفحة الأسعار", "Shown on the pricing page")} defaultChecked={v ? v.is_published === "on" : pkg?.is_published ?? true} />
+          <Toggle name="is_featured" label={t("«الأكثر طلباً»", "“Most popular”")} hint={t("تُميَّز في المنتصف", "Highlighted in the middle")} defaultChecked={v ? v.is_featured === "on" : pkg?.is_featured} />
+          <TextField label={t("ترتيب الظهور", "Sort order")} name="sort_order" type="number" min={0} dir="ltr" defaultValue={v?.sort_order ?? String(pkg?.sort_order ?? 0)} error={e.sort_order} hint={t("الأصغر يظهر أولاً.", "Lower shows first.")} />
         </div>
       </Card>
       <FormActions pending={pending} cancelHref="/dashboard/pricing" state={state} />

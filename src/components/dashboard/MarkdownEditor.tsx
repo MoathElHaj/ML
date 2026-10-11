@@ -5,6 +5,7 @@ import { Bold, Eye, Heading2, Heading3, ImagePlus, Link2, List, ListOrdered, Loa
 import { uploadContentImage } from "@/actions/admin";
 import { Prose } from "@/components/Prose";
 import { cn } from "@/lib/utils";
+import { useT } from "./DashLang";
 
 type Props = {
   name: string;
@@ -30,6 +31,8 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
   const [uploading, startUpload] = useTransition();
   const [uploadError, setUploadError] = useState("");
   const id = `f-${name}`;
+  const { t } = useT();
+  // Content language (what's typed) vs. dashboard language (the editor's own labels).
   const isEn = dir === "ltr";
   const words = value.trim() ? value.trim().split(/\s+/).length : 0;
 
@@ -59,7 +62,7 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
   const onFile = (f: File | undefined) => {
     if (!f) return;
     setUploadError("");
-    const alt = window.prompt(isEn ? "Describe the image (alt text, helps SEO):" : "وصف الصورة (نص بديل يساعد في SEO وإمكانية الوصول):", "") ?? "";
+    const alt = window.prompt(t("وصف الصورة (نص بديل يساعد في SEO وإمكانية الوصول):", "Describe the image (alt text, helps SEO and accessibility):"), "") ?? "";
     startUpload(async () => {
       const fd = new FormData();
       fd.set("file", f);
@@ -67,7 +70,7 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
       const res = await uploadContentImage(fd);
       if (file.current) file.current.value = "";
       if (!res.url) {
-        setUploadError(res.error ?? "تعذّر رفع الصورة");
+        setUploadError(res.error ?? t("تعذّر رفع الصورة", "Could not upload the image"));
         return;
       }
       const el = ref.current;
@@ -78,13 +81,13 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
   };
 
   const tools: { key: Parameters<typeof apply>[0]; label: string; Icon: typeof Bold }[] = [
-    { key: "h2", label: "عنوان رئيسي", Icon: Heading2 },
-    { key: "h3", label: "عنوان فرعي", Icon: Heading3 },
-    { key: "bold", label: "نص عريض", Icon: Bold },
-    { key: "list", label: "قائمة نقطية", Icon: List },
-    { key: "ol", label: "قائمة مرقمة", Icon: ListOrdered },
-    { key: "quote", label: "اقتباس", Icon: Quote },
-    { key: "link", label: "رابط", Icon: Link2 },
+    { key: "h2", label: t("عنوان رئيسي", "Heading"), Icon: Heading2 },
+    { key: "h3", label: t("عنوان فرعي", "Subheading"), Icon: Heading3 },
+    { key: "bold", label: t("نص عريض", "Bold"), Icon: Bold },
+    { key: "list", label: t("قائمة نقطية", "Bulleted list"), Icon: List },
+    { key: "ol", label: t("قائمة مرقمة", "Numbered list"), Icon: ListOrdered },
+    { key: "quote", label: t("اقتباس", "Quote"), Icon: Quote },
+    { key: "link", label: t("رابط", "Link"), Icon: Link2 },
   ];
 
   return (
@@ -93,7 +96,7 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
         {label} {required && <span className="text-accent" aria-hidden>*</span>}
       </label>
       <div className={cn("overflow-hidden rounded-xl border-[1.5px] bg-white", error ? "border-[#b42318]" : "border-[#b6a5d6] focus-within:border-violet")}>
-        <div className="flex flex-wrap items-center gap-1 border-b border-line bg-lilac-50 p-1.5" role="toolbar" aria-label="أدوات التنسيق">
+        <div className="flex flex-wrap items-center gap-1 border-b border-line bg-lilac-50 p-1.5" role="toolbar" aria-label={t("أدوات التنسيق", "Formatting")}>
           {tools.map(({ key, label: l, Icon }) => (
             <button
               key={key}
@@ -115,7 +118,7 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
             className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold text-violet transition-colors hover:bg-white disabled:opacity-40"
           >
             {uploading ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ImagePlus className="size-4" aria-hidden />}
-            {uploading ? "جارٍ الرفع…" : "إدراج صورة"}
+            {uploading ? t("جارٍ الرفع…", "Uploading…") : t("إدراج صورة", "Insert image")}
           </button>
           <input ref={file} type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" className="sr-only" tabIndex={-1} onChange={(e) => onFile(e.target.files?.[0])} />
           <button
@@ -128,7 +131,7 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
             )}
           >
             {preview ? <PenLine className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-            {preview ? "تحرير" : "معاينة"}
+            {preview ? t("تحرير", "Edit") : t("معاينة", "Preview")}
           </button>
         </div>
         <textarea
@@ -145,14 +148,14 @@ export function MarkdownEditor({ name, label, defaultValue = "", rows = 14, requ
         />
         {preview && (
           <div dir={dir} className="max-h-[560px] overflow-y-auto px-5 py-4">
-            {value.trim() ? <Prose text={value} /> : <p className="text-muted">لا يوجد محتوى بعد.</p>}
+            {value.trim() ? <Prose text={value} /> : <p className="text-muted">{t("لا يوجد محتوى بعد.", "Nothing written yet.")}</p>}
           </div>
         )}
       </div>
       <div className="mt-1.5 flex flex-wrap justify-between gap-2 text-[13px] text-muted">
         <span>{hint}</span>
         <span>
-          {words} {isEn ? "words" : "كلمة"} · ~{Math.max(1, Math.round(words / 180))} {isEn ? "min read" : "د قراءة"}
+          {words} {t("كلمة", "words")} · ~{Math.max(1, Math.round(words / 180))} {t("د قراءة", "min read")}
         </span>
       </div>
       {uploadError && <p className="field-error">{uploadError}</p>}

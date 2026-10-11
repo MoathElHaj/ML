@@ -22,6 +22,7 @@ export const META_SCOPES = [
   "pages_show_list",
   "pages_read_engagement",
   "pages_manage_ads",
+  "leads_retrieval", // Instagram/Facebook Lead Ads forms → Clients
 ];
 
 export class MetaError extends Error {

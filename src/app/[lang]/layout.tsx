@@ -9,6 +9,7 @@ import { WhatsAppButton } from "@/components/site/WhatsAppButton";
 import { WhatsAppLinkHandler } from "@/components/WhatsAppLinkHandler";
 import { MotionProvider } from "@/components/motion/MotionProvider";
 import { GtmNoscript, TrackingScripts } from "@/components/Tracking";
+import { AttributionCapture } from "@/components/AttributionCapture";
 import { getTrackingSettings } from "@/lib/settings";
 import { getPackages } from "@/lib/data";
 import { JsonLd } from "@/components/JsonLd";
@@ -76,6 +77,7 @@ export default async function SiteLayout(props: LayoutProps<"/[lang]">) {
         </MotionProvider>
         <WhatsAppLinkHandler />
         <TrackingScripts t={tracking} />
+        <AttributionCapture />
       </body>
     </html>
   );

@@ -1,12 +1,19 @@
+import { requireSection } from "@/lib/supabase/server";
+import { getDashT } from "@/lib/dash";
 import { PageHeader } from "@/components/dashboard/ui";
 import { PackageForm } from "@/components/dashboard/forms";
 
-export const metadata = { title: "باقة جديدة" };
+export async function generateMetadata() {
+  const { t } = await getDashT();
+  return { title: t("باقة جديدة", "New package") };
+}
 
-export default function NewPackage() {
+export default async function NewPage() {
+  await requireSection("pricing");
+  const { t } = await getDashT();
   return (
     <>
-      <PageHeader title="باقة جديدة" />
+      <PageHeader title={t("باقة جديدة", "New package")} />
       <PackageForm />
     </>
   );

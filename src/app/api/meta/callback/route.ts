@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
 
   const admin = await getAdmin();
   if (!admin) return NextResponse.redirect(new URL("/login", request.url));
+  if (!admin.can("marketing")) return NextResponse.redirect(new URL("/dashboard?denied=marketing", request.url));
 
   const { searchParams } = request.nextUrl;
   if (searchParams.get("error")) return back("denied");
