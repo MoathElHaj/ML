@@ -13,6 +13,7 @@ export const site = {
   address: process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "",
   socials: {
     instagram: process.env.NEXT_PUBLIC_INSTAGRAM_URL || "",
+    facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL || "",
     x: process.env.NEXT_PUBLIC_X_URL || "",
     linkedin: process.env.NEXT_PUBLIC_LINKEDIN_URL || "",
     tiktok: process.env.NEXT_PUBLIC_TIKTOK_URL || "",

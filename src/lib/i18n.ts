@@ -65,7 +65,8 @@ const ar = {
     contact: "تواصل معنا",
     rights: "جميع الحقوق محفوظة.",
     whatsapp: "واتساب",
-    social: { instagram: "إنستغرام", x: "إكس", linkedin: "لينكدإن", tiktok: "تيك توك", whatsapp: "واتساب" },
+    social: { instagram: "إنستغرام", facebook: "فيسبوك", x: "إكس", linkedin: "لينكدإن", tiktok: "تيك توك", whatsapp: "واتساب" },
+    follow: "تابعنا",
   },
   common: {
     discoverService: "اكتشف الخدمة",
@@ -422,7 +423,8 @@ const en: Dict = {
     contact: "Get in touch",
     rights: "All rights reserved.",
     whatsapp: "WhatsApp",
-    social: { instagram: "Instagram", x: "X", linkedin: "LinkedIn", tiktok: "TikTok", whatsapp: "WhatsApp" },
+    social: { instagram: "Instagram", facebook: "Facebook", x: "X", linkedin: "LinkedIn", tiktok: "TikTok", whatsapp: "WhatsApp" },
+    follow: "Follow us",
   },
   common: {
     discoverService: "Explore service",

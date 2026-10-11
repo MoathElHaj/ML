@@ -4,17 +4,19 @@ import { Mail, MapPin, Phone } from "lucide-react";
 import { nav, site, whatsappLink } from "@/lib/site";
 import { defaultServices } from "@/lib/content";
 import { getDict, href, pick, type Lang } from "@/lib/i18n";
-import { InstagramIcon, LinkedInIcon, TikTokIcon, WhatsAppIcon, XIcon } from "@/components/icons";
+import { FacebookIcon, InstagramIcon, LinkedInIcon, TikTokIcon, WhatsAppIcon, XIcon } from "@/components/icons";
 
 export function Footer({ lang }: { lang: Lang }) {
   const t = getDict(lang);
   const wa = whatsappLink(t.wa.general);
+  // Order requested by Bariq: WhatsApp, Instagram, Facebook, LinkedIn — then any others that are set.
   const socials = [
-    { href: site.socials.instagram, label: t.footer.social.instagram, Icon: InstagramIcon },
-    { href: site.socials.x, label: t.footer.social.x, Icon: XIcon },
-    { href: site.socials.linkedin, label: t.footer.social.linkedin, Icon: LinkedInIcon },
-    { href: site.socials.tiktok, label: t.footer.social.tiktok, Icon: TikTokIcon },
-    { href: wa ?? "", label: t.footer.social.whatsapp, Icon: WhatsAppIcon },
+    { href: wa ?? "", label: t.footer.social.whatsapp, Icon: WhatsAppIcon, hover: "hover:bg-whatsapp-dark hover:text-white" },
+    { href: site.socials.instagram, label: t.footer.social.instagram, Icon: InstagramIcon, hover: "hover:bg-[#e1306c] hover:text-white" },
+    { href: site.socials.facebook, label: t.footer.social.facebook, Icon: FacebookIcon, hover: "hover:bg-[#1877f2] hover:text-white" },
+    { href: site.socials.linkedin, label: t.footer.social.linkedin, Icon: LinkedInIcon, hover: "hover:bg-[#0a66c2] hover:text-white" },
+    { href: site.socials.x, label: t.footer.social.x, Icon: XIcon, hover: "hover:bg-white hover:text-night" },
+    { href: site.socials.tiktok, label: t.footer.social.tiktok, Icon: TikTokIcon, hover: "hover:bg-white hover:text-night" },
   ].filter((s) => s.href);
 
   return (
@@ -25,21 +27,25 @@ export function Footer({ lang }: { lang: Lang }) {
           <Image src="/images/logo-white.png" alt="Bariq — بريق" width={1136} height={476} className="h-12 w-auto" />
           <p className="mt-5 max-w-xs text-[15px] leading-8 text-white/75">{t.meta.description}</p>
           {socials.length > 0 && (
-            <ul className="mt-6 flex gap-2">
-              {socials.map(({ href: link, label, Icon }) => (
-                <li key={label}>
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className="flex size-10 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white hover:text-night"
-                  >
-                    <Icon className="size-[18px]" />
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-7">
+              <p className="text-sm font-semibold text-white/90">{t.footer.follow}</p>
+              <ul className="mt-3 flex flex-wrap gap-2.5">
+                {socials.map(({ href: link, label, Icon, hover }) => (
+                  <li key={label}>
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      title={label}
+                      className={`flex size-11 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/10 transition-[background-color,color,transform] duration-200 hover:-translate-y-0.5 ${hover}`}
+                    >
+                      <Icon className="size-5" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 

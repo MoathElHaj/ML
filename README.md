@@ -33,7 +33,7 @@
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | رقم واتساب بالصيغة الدولية، أرقام فقط. الافتراضي رقم بريق `96894178876` |
 | `NEXT_PUBLIC_BUSINESS_TIMEZONE` | المنطقة الزمنية لمواعيد الاستشارات (الافتراضي `Asia/Muscat`) |
 | `NEXT_PUBLIC_CONTACT_EMAIL` / `PHONE` / `ADDRESS` | بيانات التواصل (اختيارية) |
-| `NEXT_PUBLIC_INSTAGRAM_URL` / `X_URL` / `LINKEDIN_URL` / `TIKTOK_URL` | حسابات التواصل (اختيارية) |
+| `NEXT_PUBLIC_INSTAGRAM_URL` / `FACEBOOK_URL` / `LINKEDIN_URL` / `X_URL` / `TIKTOK_URL` | روابط حسابات التواصل في الفوتر (يظهر كل حساب عند إضافة رابطه) |
 
 ## 3. ربط Meta والحملات الإعلانية بالذكاء الاصطناعي (اختياري)
 
