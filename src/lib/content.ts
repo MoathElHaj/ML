@@ -1,0 +1,94 @@
+import type { Service } from "./types";
+
+/**
+ * Bariq's four core services. Mirrors supabase/seed.sql and is shown only while the
+ * database is not connected, so the site never renders an empty services section.
+ */
+export const defaultServices: Service[] = [
+  {
+    id: "default-digital-marketing",
+    slug: "digital-marketing",
+    title: "التسويق الرقمي",
+    summary: "حملات مدروسة على منصات التواصل ومحركات البحث تحوّل المتابعين إلى عملاء.",
+    description:
+      "نبني لعلامتك استراتيجية تسويق رقمي متكاملة تبدأ بفهم جمهورك ومنافسيك، ثم ندير حساباتك وحملاتك الإعلانية ونقيس النتائج باستمرار حتى يتحول كل ريال تنفقه إلى نمو حقيقي.",
+    icon: "megaphone",
+    image_url: "/images/service-marketing.jpg",
+    features: [
+      "إدارة حسابات التواصل الاجتماعي",
+      "الإعلانات الممولة على Meta وGoogle وTikTok وSnapchat",
+      "تحسين الظهور في محركات البحث SEO",
+      "صناعة المحتوى وتقارير أداء شهرية",
+    ],
+    sort_order: 1,
+    is_published: true,
+  },
+  {
+    id: "default-graphic-design",
+    slug: "graphic-design",
+    title: "تصميم الجرافيك",
+    summary: "هويات بصرية وتصاميم تلفت الانتباه وتبقى في الذاكرة.",
+    description:
+      "نصمم هوية بصرية تعبّر عن شخصيتك من الشعار حتى أصغر تفصيلة، ونحوّل رسائلك إلى تصاميم واضحة وجذابة لكل منصة: من منشورات التواصل إلى المطبوعات والعروض التقديمية.",
+    icon: "palette",
+    image_url: "/images/service-design.jpg",
+    features: [
+      "تصميم الشعارات والهويات البصرية",
+      "تصاميم منصات التواصل الاجتماعي",
+      "المطبوعات والعروض التقديمية",
+      "الموشن جرافيك والفيديو القصير",
+    ],
+    sort_order: 2,
+    is_published: true,
+  },
+  {
+    id: "default-web-development",
+    slug: "web-development",
+    title: "تطوير المواقع",
+    summary: "مواقع ومتاجر سريعة وآمنة، مصممة لتحويل الزوار إلى عملاء.",
+    description:
+      "نطوّر مواقع تعريفية ومتاجر إلكترونية وأنظمة مخصصة بأحدث التقنيات، بتصميم متجاوب مع كل الشاشات وسرعة تحميل عالية وتجربة استخدام مدروسة، مع لوحة تحكم تديرون منها المحتوى بسهولة.",
+    icon: "monitor-smartphone",
+    image_url: "/images/service-web.jpg",
+    features: [
+      "مواقع الشركات والمواقع التعريفية",
+      "المتاجر الإلكترونية وبوابات الدفع",
+      "لوحات التحكم والأنظمة المخصصة",
+      "تحسين السرعة وتجربة المستخدم",
+    ],
+    sort_order: 3,
+    is_published: true,
+  },
+  {
+    id: "default-mobile-development",
+    slug: "mobile-development",
+    title: "تطوير تطبيقات الموبايل",
+    summary: "تطبيقات iOS وAndroid بتجربة سلسة تضع خدماتك في جيب عملائك.",
+    description:
+      "نصمم ونطوّر تطبيقات جوال أصلية ومتعددة المنصات، من دراسة الفكرة وتصميم الواجهات حتى النشر على المتاجر والدعم المستمر، مع ربط كامل بأنظمتك وبوابات الدفع.",
+    icon: "smartphone",
+    image_url: "/images/service-mobile.jpg",
+    features: [
+      "تطبيقات iOS وAndroid",
+      "تصميم واجهات وتجربة المستخدم UI/UX",
+      "الربط مع الأنظمة وبوابات الدفع",
+      "النشر على المتاجر والدعم الفني",
+    ],
+    sort_order: 4,
+    is_published: true,
+  },
+];
+
+export const processSteps = [
+  { title: "نستمع ونفهم", body: "جلسة استشارية مجانية نتعرف فيها على أهدافك وجمهورك وتحدياتك." },
+  { title: "نخطط بوضوح", body: "خطة عمل وجدول زمني وتكلفة واضحة قبل أن نبدأ، بلا مفاجآت." },
+  { title: "نصمم وننفّذ", body: "فريق متخصص يحوّل الخطة إلى تصاميم ومنتجات وحملات بجودة عالية." },
+  { title: "نطلق ونطوّر", body: "نطلق المشروع ونتابع الأداء بالأرقام لنحسّن النتائج باستمرار." },
+];
+
+export const values = [
+  { title: "الإبداع بهدف", body: "كل فكرة نقدمها مرتبطة بهدف تجاري يمكن قياسه." },
+  { title: "الشفافية", body: "تقارير واضحة وتواصل مستمر في كل مرحلة من المشروع." },
+  { title: "الجودة أولاً", body: "تفاصيل مدروسة في التصميم والكود والمحتوى." },
+  { title: "شراكة طويلة", body: "نبقى معك بعد الإطلاق بالدعم والتطوير والتحسين." },
+];
