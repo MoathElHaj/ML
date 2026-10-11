@@ -4,12 +4,26 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CalendarCheck, Menu, X } from "lucide-react";
+import { CalendarCheck, Languages, Menu, X } from "lucide-react";
 import { nav } from "@/lib/site";
+import { basePath, getDict, href, type Lang } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 
-export function Header() {
-  const pathname = usePathname();
+function Logo({ className }: { className?: string }) {
+  return (
+    <>
+      <Image src="/images/logo.png" alt="Bariq — بريق" width={1136} height={476} priority className={cn("w-auto dark:hidden", className)} />
+      <Image src="/images/logo-white.png" alt="Bariq — بريق" width={1136} height={476} priority className={cn("hidden w-auto dark:block", className)} />
+    </>
+  );
+}
+
+export function Header({ lang }: { lang: Lang }) {
+  const t = getDict(lang).nav;
+  // Normalized so the server (rewritten /ar/...) and the browser URL agree.
+  const path = basePath(usePathname());
+  const other: Lang = lang === "ar" ? "en" : "ar";
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -27,41 +41,55 @@ export function Header() {
     };
   }, [open]);
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const isActive = (p: string) => (p === "/" ? path === "/" : path.startsWith(p));
+
+  const langSwitch = (
+    // A full page load, so the document's lang and dir switch cleanly.
+    <a
+      href={href(other, path)}
+      hrefLang={other}
+      lang={other}
+      aria-label={t.switchLangAria}
+      className="inline-flex h-11 items-center gap-1.5 rounded-full border border-line bg-card px-3.5 text-sm font-semibold text-ink transition-colors hover:border-accent hover:text-accent"
+    >
+      <Languages className="size-4" aria-hidden />
+      {t.switchLang}
+    </a>
+  );
 
   return (
     <header
       className={cn(
         "sticky top-0 z-40 transition-[background-color,box-shadow,border-color] duration-300",
         scrolled || open
-          ? "border-b border-line bg-white/90 shadow-[0_6px_24px_-18px_rgb(35_11_75/.35)] backdrop-blur-md"
+          ? "border-b border-line bg-surface/90 shadow-[0_6px_24px_-18px_rgb(35_11_75/.35)] backdrop-blur-md"
           : "border-b border-transparent bg-transparent",
       )}
     >
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-3 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2"
+        className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-3 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2"
       >
-        تخطَّ إلى المحتوى
+        {t.skip}
       </a>
-      <div className="container-x flex h-[72px] items-center justify-between gap-4">
-        <Link href="/" className="shrink-0" aria-label="بريق — الصفحة الرئيسية" onClick={() => setOpen(false)}>
-          <Image src="/images/logo.png" alt="بريق" width={1136} height={476} priority className="h-10 w-auto" />
+      <div className="container-x flex h-[72px] items-center justify-between gap-3">
+        <Link href={href(lang, "/")} className="shrink-0" aria-label={t.homeAria} onClick={() => setOpen(false)}>
+          <Logo className="h-10" />
         </Link>
 
-        <nav aria-label="القائمة الرئيسية" className="hidden lg:block">
+        <nav aria-label={t.mainNav} className="hidden xl:block">
           <ul className="flex items-center gap-1">
             {nav.map((item) => (
               <li key={item.href}>
                 <Link
-                  href={item.href}
+                  href={href(lang, item.href)}
                   aria-current={isActive(item.href) ? "page" : undefined}
                   className={cn(
-                    "rounded-full px-4 py-2 text-[15px] font-medium transition-colors",
-                    isActive(item.href) ? "bg-lilac-50 text-violet" : "text-night hover:text-violet",
+                    "rounded-full px-3.5 py-2 text-[15px] font-medium transition-colors",
+                    isActive(item.href) ? "bg-tint text-accent" : "text-ink hover:text-accent",
                   )}
                 >
-                  {item.label}
+                  {t[item.key]}
                 </Link>
               </li>
             ))}
@@ -69,16 +97,20 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/booking" className="btn btn-primary btn-sm hidden sm:inline-flex">
+          <div className="hidden items-center gap-2 sm:flex">
+            {langSwitch}
+            <ThemeToggle lang={lang} />
+          </div>
+          <Link href={href(lang, "/booking")} className="btn btn-primary btn-sm hidden md:inline-flex">
             <CalendarCheck className="size-4" aria-hidden />
-            احجز استشارة مجانية
+            {t.book}
           </Link>
           <button
             type="button"
-            className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-white text-night lg:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-full border border-line bg-card text-ink xl:hidden"
             aria-expanded={open}
             aria-controls="mobile-menu"
-            aria-label={open ? "إغلاق القائمة" : "فتح القائمة"}
+            aria-label={open ? t.closeMenu : t.openMenu}
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -87,28 +119,32 @@ export function Header() {
       </div>
 
       {open && (
-        <div id="mobile-menu" className="h-[calc(100dvh-72px)] overflow-y-auto border-t border-line bg-white lg:hidden">
-          <nav aria-label="قائمة الجوال" className="container-x py-6">
+        <div id="mobile-menu" className="h-[calc(100dvh-72px)] overflow-y-auto border-t border-line bg-surface xl:hidden">
+          <nav aria-label={t.mobileNav} className="container-x py-6">
             <ul className="flex flex-col gap-1">
               {nav.map((item) => (
                 <li key={item.href}>
                   <Link
-                    href={item.href}
+                    href={href(lang, item.href)}
                     onClick={() => setOpen(false)}
                     aria-current={isActive(item.href) ? "page" : undefined}
                     className={cn(
                       "block rounded-2xl px-4 py-3.5 text-lg font-semibold",
-                      isActive(item.href) ? "bg-lilac-50 text-violet" : "text-night",
+                      isActive(item.href) ? "bg-tint text-accent" : "text-ink",
                     )}
                   >
-                    {item.label}
+                    {t[item.key]}
                   </Link>
                 </li>
               ))}
             </ul>
-            <Link href="/booking" onClick={() => setOpen(false)} className="btn btn-primary mt-6 w-full">
+            <div className="mt-6 flex items-center gap-2 sm:hidden">
+              {langSwitch}
+              <ThemeToggle lang={lang} />
+            </div>
+            <Link href={href(lang, "/booking")} onClick={() => setOpen(false)} className="btn btn-primary mt-6 w-full">
               <CalendarCheck className="size-5" aria-hidden />
-              احجز استشارة مجانية
+              {t.book}
             </Link>
           </nav>
         </div>

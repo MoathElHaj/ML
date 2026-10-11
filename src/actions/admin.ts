@@ -93,6 +93,10 @@ const serviceSchema = z.object({
   description: z.string().trim().max(5000),
   icon: z.string().trim().min(1),
   features: z.string().transform(lines),
+  title_en: optional(120),
+  summary_en: optional(300),
+  description_en: optional(5000),
+  features_en: z.string().default("").transform(lines),
   sort_order: z.coerce.number().int().min(0).max(999),
   is_published: checkbox,
 });
@@ -145,6 +149,10 @@ const projectSchema = z.object({
   description: z.string().trim().max(10000),
   link_url: url,
   tags: z.string().transform(list),
+  title_en: optional(160),
+  summary_en: optional(400),
+  description_en: optional(10000),
+  tags_en: z.string().default("").transform(list),
   sort_order: z.coerce.number().int().min(0).max(999),
   is_featured: checkbox,
   is_published: checkbox,
@@ -184,6 +192,10 @@ const postSchema = z.object({
   content: z.string().trim().min(20, "اكتب محتوى المقال (20 حرفاً على الأقل)"),
   category: optional(80),
   author_name: z.string().trim().min(2).max(120),
+  title_en: optional(200),
+  excerpt_en: optional(400),
+  content_en: optional(50000),
+  category_en: optional(80),
   is_published: checkbox,
 });
 

@@ -11,6 +11,7 @@ import {
   Search,
   Camera,
   ShoppingCart,
+  ArrowLeft,
   type LucideIcon,
 } from "lucide-react";
 
@@ -78,3 +79,11 @@ export function TikTokIcon(props: P) {
     </svg>
   );
 }
+
+/** "Forward" arrow: points left in Arabic (RTL) and right in English (LTR). */
+export function ForwardArrow({ className }: { className?: string }) {
+  return <ArrowLeft aria-hidden className={["ltr:-scale-x-100", className].filter(Boolean).join(" ")} />;
+}
+
+/** Classes that nudge a forward arrow on hover in the reading direction. */
+export const nudge = "transition-transform rtl:group-hover:-translate-x-1 ltr:group-hover:translate-x-1";

@@ -19,14 +19,15 @@ export const site = {
   },
 } as const;
 
+/** Public navigation; labels come from the dictionary (`nav.<key>`). */
 export const nav = [
-  { href: "/", label: "الرئيسية" },
-  { href: "/services", label: "خدماتنا" },
-  { href: "/portfolio", label: "أعمالنا" },
-  { href: "/pricing", label: "الأسعار" },
-  { href: "/about", label: "من نحن" },
-  { href: "/blog", label: "المدونة" },
-  { href: "/contact", label: "تواصل معنا" },
+  { href: "/", key: "home" },
+  { href: "/services", key: "services" },
+  { href: "/portfolio", key: "portfolio" },
+  { href: "/pricing", key: "pricing" },
+  { href: "/about", key: "about" },
+  { href: "/blog", key: "blog" },
+  { href: "/contact", key: "contact" },
 ] as const;
 
 /** Consultation booking rules. Days use JS numbering: 0 = Sunday … 6 = Saturday. */
@@ -39,6 +40,7 @@ export const booking = {
   timeZone: process.env.NEXT_PUBLIC_BUSINESS_TIMEZONE || "Asia/Muscat",
 };
 
+/** Arabic labels used in the dashboard; the public form reads `booking.channels` from the dictionary. */
 export const channels = [
   { value: "online", label: "اجتماع أونلاين" },
   { value: "phone", label: "مكالمة هاتفية" },

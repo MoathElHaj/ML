@@ -2,27 +2,31 @@ export function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-const dateFmt = new Intl.DateTimeFormat("ar-u-nu-latn", { day: "numeric", month: "long", year: "numeric" });
-const dayFmt = new Intl.DateTimeFormat("ar-u-nu-latn", { weekday: "long", day: "numeric", month: "long" });
-const shortDayFmt = new Intl.DateTimeFormat("ar-u-nu-latn", { weekday: "short" });
+type L = "ar" | "en";
+const intlLocale = (lang: L) => (lang === "en" ? "en-GB" : "ar-u-nu-latn");
+const fmt = (lang: L, opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(intlLocale(lang), opts);
 
 /** Parses a plain `YYYY-MM-DD` date at local noon so it never shifts a day across time zones. */
 export function parseDay(day: string) {
   return new Date(`${day}T12:00:00`);
 }
 
-export function formatDate(value: string | Date | null | undefined) {
+export function formatDate(value: string | Date | null | undefined, lang: L = "ar") {
   if (!value) return "";
   const d = typeof value === "string" ? (value.length === 10 ? parseDay(value) : new Date(value)) : value;
-  return dateFmt.format(d);
+  return fmt(lang, { day: "numeric", month: "long", year: "numeric" }).format(d);
 }
 
-export function formatDay(day: string) {
-  return dayFmt.format(parseDay(day));
+export function formatDay(day: string, lang: L = "ar") {
+  return fmt(lang, { weekday: "long", day: "numeric", month: "long" }).format(parseDay(day));
 }
 
-export function formatShortWeekday(day: string) {
-  return shortDayFmt.format(parseDay(day));
+export function formatShortWeekday(day: string, lang: L = "ar") {
+  return fmt(lang, { weekday: "short" }).format(parseDay(day));
+}
+
+export function formatShortMonth(day: string, lang: L = "ar") {
+  return fmt(lang, { month: "short" }).format(parseDay(day));
 }
 
 /** Today's date (YYYY-MM-DD) in the given IANA time zone. */
@@ -53,11 +57,11 @@ export function toDayString(d: Date) {
   return `${y}-${m}-${day}`;
 }
 
-/** "14:00:00" or "14:00" → "2:00 م" */
-export function formatTime(time: string) {
+/** "14:00:00" or "14:00" → "2:00 م" / "2:00 PM" */
+export function formatTime(time: string, lang: L = "ar") {
   const [hStr, m] = time.split(":");
   const h = Number(hStr);
-  const suffix = h >= 12 ? "م" : "ص";
+  const suffix = lang === "en" ? (h >= 12 ? "PM" : "AM") : h >= 12 ? "م" : "ص";
   const h12 = h % 12 === 0 ? 12 : h % 12;
   return `${h12}:${m} ${suffix}`;
 }

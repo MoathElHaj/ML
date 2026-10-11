@@ -16,7 +16,7 @@ export function TextField({
   return (
     <div className={className}>
       <label htmlFor={id} className="field-label">
-        {label} {required && <span className="text-violet" aria-hidden>*</span>}
+        {label} {required && <span className="text-accent" aria-hidden>*</span>}
       </label>
       <input id={id} name={name} required={required} aria-invalid={error ? true : undefined} aria-describedby={describedBy} className="field" {...rest} />
       {error ? <p id={`${id}-err`} className="field-error">{error}</p> : hint ? <p id={`${id}-hint`} className="field-hint">{hint}</p> : null}
@@ -37,7 +37,7 @@ export function TextArea({
   return (
     <div className={className}>
       <label htmlFor={id} className="field-label">
-        {label} {required && <span className="text-violet" aria-hidden>*</span>}
+        {label} {required && <span className="text-accent" aria-hidden>*</span>}
       </label>
       <textarea id={id} name={name} required={required} aria-invalid={error ? true : undefined} aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined} className="field" {...rest} />
       {error ? <p id={`${id}-err`} className="field-error">{error}</p> : hint ? <p id={`${id}-hint`} className="field-hint">{hint}</p> : null}
@@ -58,7 +58,7 @@ export function SelectField({
   return (
     <div className={className}>
       <label htmlFor={id} className="field-label">
-        {label} {required && <span className="text-violet" aria-hidden>*</span>}
+        {label} {required && <span className="text-accent" aria-hidden>*</span>}
       </label>
       <select id={id} name={name} required={required} aria-invalid={error ? true : undefined} className={cn("field appearance-auto")} {...rest}>
         {children}
@@ -87,7 +87,9 @@ export function FormAlert({ ok, message }: { ok: boolean; message?: string }) {
       role={ok ? "status" : "alert"}
       className={cn(
         "rounded-2xl border px-4 py-3 text-[15px] font-medium",
-        ok ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-red-200 bg-red-50 text-red-900",
+        ok
+          ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100"
+          : "border-red-200 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-100",
       )}
     >
       {message}

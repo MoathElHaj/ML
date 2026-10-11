@@ -100,6 +100,25 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
+/** Optional English version. The site shows Arabic when a field is left empty. */
+function EnglishCard({ children }: { children: React.ReactNode }) {
+  return (
+    <details className="group rounded-[20px] border border-line bg-white" open>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 sm:p-6">
+        <span>
+          <span className="block font-bold text-night">النسخة الإنجليزية · English</span>
+          <span className="block text-sm text-muted">اختيارية — تظهر لزوار الموقع الإنجليزي (/en). عند تركها فارغة يُعرض النص العربي.</span>
+        </span>
+        <span className="text-sm font-semibold text-violet group-open:hidden">إظهار</span>
+        <span className="hidden text-sm font-semibold text-violet group-open:inline">إخفاء</span>
+      </summary>
+      <div dir="ltr" lang="en" className="space-y-5 border-t border-line p-5 text-left sm:p-6">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 // ---------------------------------------------------------------------------
 export function ServiceForm({ service }: { service?: Service }) {
   const [state, action, pending] = useActionState(saveService, initial);
@@ -125,6 +144,19 @@ export function ServiceForm({ service }: { service?: Service }) {
           hint="ميزة واحدة في كل سطر."
         />
       </Card>
+      <EnglishCard>
+        <TextField label="Service name" name="title_en" defaultValue={v?.title_en ?? service?.title_en ?? ""} error={e.title_en} />
+        <TextField label="Short summary" name="summary_en" defaultValue={v?.summary_en ?? service?.summary_en ?? ""} error={e.summary_en} />
+        <TextArea label="Full description" name="description_en" rows={4} defaultValue={v?.description_en ?? service?.description_en ?? ""} error={e.description_en} />
+        <TextArea
+          label="What's included"
+          name="features_en"
+          rows={4}
+          defaultValue={v?.features_en ?? service?.features_en?.join("\n") ?? ""}
+          error={e.features_en}
+          hint="One item per line."
+        />
+      </EnglishCard>
       <Card title="المظهر">
         <div>
           <span className="field-label">الأيقونة</span>
@@ -197,6 +229,12 @@ export function ProjectForm({ project, services }: { project?: Project; services
           <TextField label="الوسوم" name="tags" defaultValue={v?.tags ?? project?.tags.join("، ")} error={e.tags} hint="افصل بينها بفاصلة، مثل: مطاعم، هوية بصرية" />
         </div>
       </Card>
+      <EnglishCard>
+        <TextField label="Project name" name="title_en" defaultValue={v?.title_en ?? project?.title_en ?? ""} error={e.title_en} />
+        <TextArea label="Short summary" name="summary_en" rows={2} defaultValue={v?.summary_en ?? project?.summary_en ?? ""} error={e.summary_en} />
+        <TextArea label="Project details" name="description_en" rows={6} defaultValue={v?.description_en ?? project?.description_en ?? ""} error={e.description_en} />
+        <TextField label="Tags" name="tags_en" defaultValue={v?.tags_en ?? project?.tags_en?.join(", ") ?? ""} error={e.tags_en} hint="Comma separated, e.g. Restaurants, Branding" />
+      </EnglishCard>
       <Card title="صورة الغلاف">
         <ImageField key={state.message ?? "init"} name="cover_url" label="الصورة الرئيسية" value={project?.cover_url} error={e.cover_url} />
       </Card>
@@ -239,6 +277,15 @@ export function PostForm({ post }: { post?: Post }) {
           hint="سطر فارغ بين الفقرات · ## عنوان رئيسي · ### عنوان فرعي · - عنصر قائمة · > اقتباس · **نص عريض**"
         />
       </Card>
+      <EnglishCard>
+        <p className="text-sm text-muted">The article appears on the English blog only when it has an English title and content.</p>
+        <div className="grid gap-5 sm:grid-cols-2">
+          <TextField label="Title" name="title_en" defaultValue={v?.title_en ?? post?.title_en ?? ""} error={e.title_en} />
+          <TextField label="Category" name="category_en" defaultValue={v?.category_en ?? post?.category_en ?? ""} error={e.category_en} placeholder="e.g. Digital marketing" />
+        </div>
+        <TextArea label="Excerpt" name="excerpt_en" rows={2} defaultValue={v?.excerpt_en ?? post?.excerpt_en ?? ""} error={e.excerpt_en} />
+        <TextArea label="Content" name="content_en" rows={12} defaultValue={v?.content_en ?? post?.content_en ?? ""} error={e.content_en} hint="Same format as Arabic: blank line between paragraphs, ## heading, - list item, > quote, **bold**" />
+      </EnglishCard>
       <Card title="صورة الغلاف">
         <ImageField key={state.message ?? "init"} name="cover_url" label="صورة المقال" value={post?.cover_url} error={e.cover_url} />
       </Card>
