@@ -47,12 +47,8 @@ export async function proxy(request: NextRequest) {
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
-  if (pathname === "/login" && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
+  // Signed-in visitors on /login are handled by the page: team members go on to the dashboard,
+  // paused or removed accounts see why (redirecting here would loop with the dashboard's own check).
   return response;
 }
 

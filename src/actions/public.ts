@@ -71,6 +71,7 @@ export async function bookConsultation(_prev: FormState, formData: FormData): Pr
     if (error.code === "23505") {
       return { ok: false, message: f.msg.slotTaken, errors: { scheduled_time: f.errors.slotTaken }, values };
     }
+    if (/too_many|rate_limited/.test(error.message)) return { ok: false, message: f.msg.tooMany, values };
     console.error("bookConsultation", error.message);
     return { ok: false, message: f.msg.bookingFailed, values };
   }
@@ -100,6 +101,7 @@ export async function sendMessage(_prev: FormState, formData: FormData): Promise
   const row = { id: randomUUID(), ...parsed.data, lang, utm: await attribution() };
   const { error } = await supabase.from("messages").insert(row);
   if (error) {
+    if (/too_many|rate_limited/.test(error.message)) return { ok: false, message: f.msg.tooMany, values };
     console.error("sendMessage", error.message);
     return { ok: false, message: f.msg.contactFailed, values };
   }

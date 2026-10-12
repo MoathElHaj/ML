@@ -5,6 +5,10 @@ import { LoginForm } from "./LoginForm";
 import { RingsPattern } from "@/components/art/RingsPattern";
 import { LangSwitch } from "@/components/dashboard/LangSwitch";
 import { getDashT } from "@/lib/dash";
+import { redirect } from "next/navigation";
+import { LogOut, ShieldAlert } from "lucide-react";
+import { createSessionClient, getAdmin } from "@/lib/supabase/server";
+import { signOut } from "@/actions/auth";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getDashT();
@@ -14,6 +18,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function LoginPage(props: PageProps<"/login">) {
   const { next } = await props.searchParams;
   const { t } = await getDashT();
+  const target = typeof next === "string" && next.startsWith("/dashboard") ? next : "/dashboard";
+  if (await getAdmin()) redirect(target);
+  // Signed in, but not an active team member (paused, removed, or never added).
+  const session = await createSessionClient();
+  const strayUser = session ? (await session.auth.getUser()).data.user : null;
   return (
     <main className="grid min-h-dvh lg:grid-cols-2">
       <div className="hero-glow flex flex-col justify-center px-6 py-12 sm:px-12">
@@ -26,7 +35,25 @@ export default async function LoginPage(props: PageProps<"/login">) {
           </Link>
           <h1 className="mt-10 text-3xl font-bold text-night">{t("لوحة تحكم بريق", "Bariq Dashboard")}</h1>
           <p className="mt-2 text-muted">{t("سجّل الدخول لإدارة الخدمات والأعمال والمدونة والحجوزات.", "Sign in to manage services, portfolio, blog and bookings.")}</p>
-          <LoginForm next={typeof next === "string" ? next : "/dashboard"} />
+          {strayUser ? (
+            <div className="mt-8 space-y-4">
+              <p role="alert" className="flex gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-[15px] text-amber-900">
+                <ShieldAlert className="mt-0.5 size-5 shrink-0" aria-hidden />
+                <span>
+                  {t("الحساب", "The account")} <strong dir="ltr">{strayUser.email}</strong>{" "}
+                  {t("لا يملك صلاحية الدخول إلى لوحة التحكم، أو تم إيقافه. تواصل مع مالك الحساب.", "has no dashboard access or was paused. Contact the account owner.")}
+                </span>
+              </p>
+              <form action={signOut}>
+                <button type="submit" className="btn btn-outline w-full">
+                  <LogOut className="size-5 rtl:-scale-x-100" aria-hidden />
+                  {t("تسجيل الخروج والدخول بحساب آخر", "Sign out and use another account")}
+                </button>
+              </form>
+            </div>
+          ) : (
+            <LoginForm next={target} />
+          )}
           <Link href="/" className="mt-8 inline-block text-sm font-semibold text-violet hover:underline">
             {t("← العودة إلى الموقع", "← Back to website")}
           </Link>

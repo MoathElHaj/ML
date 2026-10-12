@@ -15,7 +15,7 @@
 ## 1. إعداد Supabase
 
 1. أنشئ مشروعاً في [supabase.com](https://supabase.com).
-2. من **SQL Editor** شغّل ملفات `supabase/migrations/` بالترتيب: `0001_init.sql` (الجداول، صلاحيات RLS، مخزن الصور `media`)، ثم `0002_english_content.sql` (حقول المحتوى الإنجليزي)، ثم `0003_meta_ads.sql` (ربط Meta والحملات)، ثم `0004_settings_pricing_email.sql` (الإعدادات، الباقات، الإجازات، سجل البريد، حقول SEO)، ثم `0005_team_tasks_clients.sql` (الأدوار والصلاحيات، المهام، العملاء وربطهم التلقائي). أول حساب مدير موجود يصبح «المالك» تلقائياً.
+2. من **SQL Editor** شغّل ملفات `supabase/migrations/` بالترتيب: `0001_init.sql` (الجداول، صلاحيات RLS، مخزن الصور `media`)، ثم `0002_english_content.sql` (حقول المحتوى الإنجليزي)، ثم `0003_meta_ads.sql` (ربط Meta والحملات)، ثم `0004_settings_pricing_email.sql` (الإعدادات، الباقات، الإجازات، سجل البريد، حقول SEO)، ثم `0005_team_tasks_clients.sql` (الأدوار والصلاحيات، المهام، العملاء وربطهم التلقائي)، ثم `0006_security_hardening.sql` (حماية ضد الإزعاج وتشديد الصلاحيات). أو الصق الملف الواحد `supabase/setup-all.sql` الذي يجمعها كلها. أول حساب مدير موجود يصبح «المالك» تلقائياً.
 3. شغّل `supabase/seed.sql` لإضافة الخدمات الأربع بالعربية والإنجليزية.
 4. أنشئ حساب المدير: **Authentication → Users → Add user** (بريد وكلمة مرور)، ثم امنحه صلاحية لوحة التحكم:
 
