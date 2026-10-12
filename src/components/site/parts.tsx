@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { CalendarCheck, Clock } from "lucide-react";
+import { CalendarCheck, ChevronDown, Clock } from "lucide-react";
 import { ForwardArrow, ServiceIcon, WhatsAppIcon, nudge } from "@/components/icons";
 import { whatsappLink } from "@/lib/site";
 import { getDict, href, type Lang } from "@/lib/i18n";
@@ -204,5 +204,38 @@ export function BrandCover({ className }: { className?: string }) {
       <RingsPattern className="absolute -end-10 -top-10 size-[280px] opacity-80" />
       <div className="grid-dots absolute inset-0 opacity-20" />
     </div>
+  );
+}
+
+/** Accordion of common questions; pair it with `faqSchema` JSON-LD on the same page. */
+export function FaqSection({ lang, faqs }: { lang: Lang; faqs: { q: string; a: string; link?: { href: string; label: string } }[] }) {
+  const t = getDict(lang);
+  return (
+    <section id="faq" className="container-x scroll-mt-24 py-20 sm:py-24" aria-labelledby="faq-title">
+      <div className="mx-auto max-w-3xl">
+        <h2 id="faq-title" className="text-center text-[28px] font-bold text-ink sm:text-4xl">
+          {t.chat.faqTitle}
+        </h2>
+        <Reveal variant="stagger" className="mt-10 space-y-3">
+          {faqs.map((f) => (
+            <details key={f.q} className="card group overflow-hidden open:shadow-[var(--shadow-lift)]">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-start text-[17px] font-semibold text-ink marker:hidden [&::-webkit-details-marker]:hidden">
+                {f.q}
+                <ChevronDown className="size-5 shrink-0 text-accent transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="border-t border-line px-5 pb-5 pt-4 text-[15px] leading-8 text-muted">
+                <p>{f.a}</p>
+                {f.link && (
+                  <Link href={href(lang, f.link.href)} className="mt-2 inline-flex items-center gap-1 font-semibold text-accent hover:underline">
+                    {f.link.label}
+                    <ForwardArrow className="size-4" />
+                  </Link>
+                )}
+              </div>
+            </details>
+          ))}
+        </Reveal>
+      </div>
+    </section>
   );
 }

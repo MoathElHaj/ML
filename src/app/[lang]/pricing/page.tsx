@@ -10,8 +10,7 @@ import { PageHero } from "@/components/site/parts";
 import { ForwardArrow, ServiceIcon, WhatsAppIcon } from "@/components/icons";
 import { Reveal } from "@/components/motion/Reveal";
 import { JsonLd } from "@/components/JsonLd";
-import { faqSchema, packagesSchema, siteFaqs } from "@/lib/schema";
-import { ChevronDown } from "lucide-react";
+import { packagesSchema } from "@/lib/schema";
 
 export const revalidate = 60;
 
@@ -28,11 +27,9 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
   const [services, packages] = await Promise.all([getServices(lang), getPackages(lang)]);
   const quoteServices = services.filter((s) => s.slug !== "digital-marketing");
 
-  const faqs = siteFaqs(lang, packages);
-
   return (
     <>
-      <JsonLd data={[packagesSchema(lang, packages), faqSchema(faqs)]} />
+      <JsonLd data={packagesSchema(lang, packages)} />
       <PageHero eyebrow={p.eyebrow} title={p.title} intro={p.intro} />
 
       <section className="container-x pb-20 pt-6 sm:pb-24" aria-labelledby="packages-title">
@@ -109,32 +106,6 @@ export default async function PricingPage(props: PageProps<"/[lang]/pricing">) {
         </p>
       </section>
 
-      <section className="container-x pb-20 sm:pb-24" aria-labelledby="faq-title">
-        <div className="mx-auto max-w-3xl">
-          <h2 id="faq-title" className="text-center text-[28px] font-bold text-ink sm:text-4xl">
-            {t.chat.faqTitle}
-          </h2>
-          <Reveal variant="stagger" className="mt-10 space-y-3">
-            {faqs.map((f) => (
-              <details key={f.q} className="card group overflow-hidden open:shadow-[var(--shadow-lift)]">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 text-start text-[17px] font-semibold text-ink marker:hidden [&::-webkit-details-marker]:hidden">
-                  {f.q}
-                  <ChevronDown className="size-5 shrink-0 text-accent transition-transform group-open:rotate-180" aria-hidden />
-                </summary>
-                <div className="border-t border-line px-5 pb-5 pt-4 text-[15px] leading-8 text-muted">
-                  <p>{f.a}</p>
-                  {"link" in f && f.link && (
-                    <Link href={href(lang, f.link.href)} className="mt-2 inline-flex items-center gap-1 font-semibold text-accent hover:underline">
-                      {f.link.label}
-                      <ForwardArrow className="size-4" />
-                    </Link>
-                  )}
-                </div>
-              </details>
-            ))}
-          </Reveal>
-        </div>
-      </section>
 
       <section className="bg-tint/70 py-20 sm:py-24" aria-labelledby="quote-title">
         <div className="container-x">
