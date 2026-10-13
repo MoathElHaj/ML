@@ -1,0 +1,7 @@
+# Netlify: builds the Next.js site with its official adapter (detected automatically).
+[build]
+  command = "pnpm build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "24"
