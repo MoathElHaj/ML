@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isSupabaseConfigured, supabaseKey, supabaseUrl } from "@/lib/supabase/env";
+import { legacyRedirect } from "@/lib/legacy-redirects";
 
 const isAdminPath = (p: string) => p === "/login" || p === "/dashboard" || p.startsWith("/dashboard/");
 
@@ -9,6 +10,12 @@ export async function proxy(request: NextRequest) {
 
   // Public site: Arabic is served without a prefix, English under /en.
   if (!isAdminPath(pathname)) {
+    const moved = legacyRedirect(pathname);
+    if (moved) {
+      const url = request.nextUrl.clone();
+      url.pathname = moved;
+      return NextResponse.redirect(url, 308);
+    }
     if (pathname === "/ar" || pathname.startsWith("/ar/")) {
       const url = request.nextUrl.clone();
       url.pathname = pathname.slice(3) || "/";
