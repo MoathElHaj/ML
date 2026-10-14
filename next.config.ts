@@ -12,8 +12,26 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
 
+/** Old WordPress links (bariq.tech before the move) → their new pages, so search rankings and shared links carry over. */
+const oldWordPressLinks: [string, string][] = [
+  ["/digital-marketing", "/services/digital-marketing"],
+  ["/web-development", "/services/web-development"],
+  ["/social-media-design", "/services/graphic-design"],
+  [`/${encodeURIComponent("اهمية-التسويق-الرقمي")}`, "/blog"],
+  ["/26379-2", "/"],
+  ["/nova1", "/portfolio"],
+  ["/websiteask", "/contact"],
+  ["/author/:path*", "/blog"],
+  ["/category/:path*", "/blog"],
+  ["/feed", "/blog"],
+  ["/wp-sitemap.xml", "/sitemap.xml"],
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  async redirects() {
+    return oldWordPressLinks.map(([source, destination]) => ({ source, destination, permanent: true }));
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },
